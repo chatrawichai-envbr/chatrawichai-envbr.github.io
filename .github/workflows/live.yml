@@ -73,18 +73,27 @@ jobs:
             exit 1
           fi
 
+      # A push that leaves doc-scanner-pdf/ unchanged (home page, the Android folder) is not seen by the step above, so
+      # files that do not match yet are checked again while Pages deploys (up to 10 minutes), the others only once.
       - name: Every file is served byte for byte
         run: |
           set -euo pipefail
-          bad=0
-          count=0
-          while IFS= read -r -d '' f; do
-            want="$(sha256sum "$f" | cut -d' ' -f1)"
-            got="$(curl -fsS "${SITE}/${f}?t=$(date +%s%N)" | sha256sum | cut -d' ' -f1)" || got="missing"
-            count=$((count + 1))
-            if [ "$want" != "$got" ]; then echo "::error::${SITE}/${f} is not the committed file"; bad=1; fi
-          done < <(git ls-files -z -- doc-scanner-pdf doc-scanner-pdf-android index.html site.css claude)
-          [ "$bad" = 0 ] || exit 1
+          mapfile -d '' todo < <(git ls-files -z -- doc-scanner-pdf doc-scanner-pdf-android index.html site.css claude)
+          count="${#todo[@]}"
+          for i in $(seq 1 40); do
+            left=()
+            for f in "${todo[@]}"; do
+              want="$(sha256sum "$f" | cut -d' ' -f1)"
+              got="$(curl -fsS "${SITE}/${f}?t=$(date +%s%N)" | sha256sum | cut -d' ' -f1)" || got="missing"
+              [ "$want" = "$got" ] || left+=("$f")
+            done
+            [ "${#left[@]}" = 0 ] && break
+            echo "attempt $i: ${#left[@]} file(s) not deployed yet (${left[0]} …), waiting…"
+            todo=("${left[@]}")
+            sleep 15
+          done
+          for f in "${left[@]}"; do echo "::error::${SITE}/${f} is not the committed file"; done
+          [ "${#left[@]}" = 0 ] || exit 1
           echo "${count} files served exactly as committed"
 
       - name: Home page and the old address
