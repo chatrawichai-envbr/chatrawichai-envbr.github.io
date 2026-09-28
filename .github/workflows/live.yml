@@ -1,8 +1,8 @@
 # GitHub Pages (user site) publishes this repository's main branch as it is (.nojekyll: no Jekyll processing):
 #   https://chatrawichai-tech.github.io/                   index.html — list of the web apps
-#   https://chatrawichai-tech.github.io/doc-scanner-pdf/   the app, published from the private repo chatrawichai-tech/claude
+#   https://chatrawichai-tech.github.io/doc-scanner-pdf/   the app, published from the private repo chatrawichai-tech/claude4code
 #                                                          by its tools/publish-site.sh (never edited here)
-#   https://chatrawichai-tech.github.io/claude/            the app's old address → redirects to /doc-scanner-pdf/
+#   https://chatrawichai-tech.github.io/claude/            the app's old address (when the repo was named claude) → redirects to /doc-scanner-pdf/
 #   https://chatrawichai-tech.github.io/doc-scanner-pdf-android/   the Android app's signed APK and download page, pushed by
 #                                                          the release job of chatrawichai-tech/claude4app (never edited here)
 #
@@ -56,7 +56,7 @@ jobs:
             echo "doc-scanner-pdf-android is $(jq -r '.version' doc-scanner-pdf-android/version.json)"
           fi
           echo "build=${build}" >> "$GITHUB_ENV"
-          echo "doc-scanner-pdf is claude@${build}"
+          echo "doc-scanner-pdf is claude4code@${build}"
 
       - name: GitHub Pages serves this build
         run: |

@@ -10,6 +10,8 @@
 
   var DETECT_INTERVAL = 400;
   var DETECT_SIDE = 480;
+  var PHOTO_TIMEOUT = 4000;   // takePhoto ช้ากว่านี้ → ใช้ภาพจากวิดีโอแทน
+  var PHOTO_SETTLE = 10000;   // รอ takePhoto ที่ค้างอยู่เสร็จก่อนหยุดกล้องได้นานสุดเท่านี้
 
   function withTimeout(promise, ms) {
     return new Promise(function (resolve, reject) {
@@ -87,6 +89,9 @@
     var torchOn = false;
     var lastQuad = null;
     var frameCanvas = document.createElement('canvas');
+    // takePhoto ที่ยังไม่เสร็จ (อาจค้างต่อหลังหมดเวลา PHOTO_TIMEOUT) — หยุดกล้องระหว่างนี้ไม่ได้:
+    // WebView ของ Android ส่งภาพเข้ากล้องที่ปิดแล้วจนแอปแครช (IllegalStateException: CameraDevice was already closed)
+    var photoPending = null;
 
     function isOpen() { return !el.view.hidden; }
 
@@ -94,10 +99,23 @@
 
     function updateCount() { el.count.textContent = String(count); }
 
+    function stopTracks(s) {
+      s.getTracks().forEach(function (t) { try { t.stop(); } catch (_) { /* ignore */ } });
+    }
+
     function stopStream() {
       clearInterval(detectTimer);
       detectTimer = null;
-      if (stream) stream.getTracks().forEach(function (t) { try { t.stop(); } catch (_) { /* ignore */ } });
+      if (stream) {
+        var s = stream;
+        // หน้ากล้องปิดทันที แต่กล้องจริงหยุดหลัง takePhoto ที่ค้างอยู่เสร็จ (ไม่เกิน PHOTO_SETTLE)
+        if (photoPending) {
+          var stop = function () { stopTracks(s); };
+          withTimeout(photoPending, PHOTO_SETTLE).then(stop, stop);
+        } else {
+          stopTracks(s);
+        }
+      }
       stream = null;
       track = null;
       imageCapture = null;
@@ -154,6 +172,11 @@
       el.shutter.disabled = true;
       el.torch.hidden = true;
       el.view.hidden = false;
+      // เปิดกล้องใหม่เร็วหลังปิด: รอกล้องเดิมหยุดก่อน (takePhoto ที่ค้างอยู่) ไม่งั้นกล้องจะไม่ว่าง
+      if (photoPending) {
+        await withTimeout(photoPending, PHOTO_SETTLE).catch(function () {});
+        if (my !== session || !isOpen()) return false;
+      }
 
       var s;
       try {
@@ -280,6 +303,15 @@
       });
     }
 
+    /** takePhoto ที่จำไว้ใน photoPending จนกว่าจะเสร็จจริง (สำเร็จหรือผิดพลาด) */
+    function takePhoto() {
+      var p = imageCapture.takePhoto();
+      var settled = p.then(function () {}, function () {});
+      photoPending = settled;
+      settled.then(function () { if (photoPending === settled) photoPending = null; });
+      return p;
+    }
+
     async function capture() {
       if (busy || !stream) return;
       busy = true;
@@ -290,8 +322,9 @@
       var my = session;
       try {
         var blob = null;
-        if (imageCapture && typeof imageCapture.takePhoto === 'function') {
-          try { blob = await withTimeout(imageCapture.takePhoto(), 4000); } catch (_) { blob = null; }
+        // takePhoto ครั้งก่อนยังไม่เสร็จ → ไม่ถ่ายซ้อน ใช้ภาพจากวิดีโอแทน
+        if (imageCapture && typeof imageCapture.takePhoto === 'function' && !photoPending) {
+          try { blob = await withTimeout(takePhoto(), PHOTO_TIMEOUT); } catch (_) { blob = null; }
         }
         if (!blob || !blob.size) blob = await grabFrame();
         if (my !== session) return;

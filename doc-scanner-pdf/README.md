@@ -68,14 +68,16 @@
 ### นำขึ้นเว็บ (แนะนำ เพื่อใช้กล้องบนมือถือ)
 
 เว็บไซต์เผยแพร่ผ่าน GitHub Pages ของ repo [`chatrawichai-tech/chatrawichai-tech.github.io`](https://github.com/chatrawichai-tech/chatrawichai-tech.github.io)
-ในโฟลเดอร์ `doc-scanner-pdf/` (→ https://chatrawichai-tech.github.io/doc-scanner-pdf/) ส่วนโค้ดทั้งหมดอยู่ใน repo `claude` เช่นเดิม
+ในโฟลเดอร์ `doc-scanner-pdf/` (→ https://chatrawichai-tech.github.io/doc-scanner-pdf/) ส่วนโค้ดทั้งหมดอยู่ใน repo `claude4code` (เดิมชื่อ `claude`)
 ทุกครั้งที่แก้ไข:
 1. รันชุดทดสอบในเบราว์เซอร์ทั้งหมด (`tools/tests`) — ต้องผ่านก่อนเผยแพร่ (CI รันซ้ำทุกครั้งที่ push)
 2. `tools/publish-site.sh` สร้างโฟลเดอร์เว็บจาก commit ที่ push แล้ว ประทับเลข commit (`tools/stamp-build.sh`)
    ลงในโฟลเดอร์ `doc-scanner-pdf/` ของ repo เว็บไซต์ แล้ว commit/push repo นั้น
 3. CI ของ repo เว็บไซต์ตรวจเว็บจริงว่าให้บริการเวอร์ชันใหม่ครบทุกไฟล์ (`version.json`) และ CI ของ repo นี้ตรวจทุกวันว่าไม่มีการแก้ที่ยังไม่เผยแพร่
 
-ลิงก์เดิม https://chatrawichai-tech.github.io/claude/ พาไปยังที่อยู่ใหม่ให้อัตโนมัติ
+ลิงก์เดิม https://chatrawichai-tech.github.io/claude/ (ที่อยู่สมัย repo ยังชื่อ `claude`) พาไปยังที่อยู่ใหม่ให้อัตโนมัติ
+
+รายการการเปลี่ยนแปลงแต่ละครั้งอยู่ใน `CHANGELOG.md` ของ repo
 
 ### อัปเดตเวอร์ชัน / ล้างแคชอัตโนมัติ
 

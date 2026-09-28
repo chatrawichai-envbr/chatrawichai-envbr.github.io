@@ -1505,17 +1505,27 @@
     });
   }
 
-  /** แสดงเวอร์ชันที่กำลังใช้งาน (เลข commit + เวลาที่เปิดหน้า จาก js/boot.js) */
+  /**
+   * แสดงเวอร์ชันที่กำลังใช้งาน (เลข commit + เวลาที่เปิดหน้า จาก js/boot.js)
+   * แพลตฟอร์มที่มีเลขรุ่นของตัวเอง (แอป Android: v1.0.N ของ Release) ส่งมาใน AppPlatform.versionLabel
+   * — แสดงเลขรุ่นนั้นแทนเลข commit และไม่แสดงเวลาที่เปิด
+   */
   function renderVersion() {
     var b = window.APP_BUILD;
     if (!b) return;
-    var o = String(b.opened || '');
-    var when = /^\d{8}-\d{6}$/.test(o)
-      ? o.slice(6, 8) + '/' + o.slice(4, 6) + '/' + o.slice(0, 4) + ' ' + o.slice(9, 11) + ':' + o.slice(11, 13) + ':' + o.slice(13, 15)
-      : '';
     var P = window.AppPlatform;
-    $('appVersion').textContent = 'เวอร์ชัน ' + (b.commit === 'dev' ? 'พัฒนา (dev)' : b.commit.slice(0, 7)) +
-      (P && P.label ? ' (' + P.label + ')' : '') + (when ? ' · เปิดเมื่อ ' + when : '');
+    var suffix = P && P.label ? ' (' + P.label + ')' : '';
+    var label = P && typeof P.versionLabel === 'string' ? P.versionLabel.trim().slice(0, 40) : '';
+    if (label) {
+      $('appVersion').textContent = 'เวอร์ชัน ' + label + suffix;
+    } else {
+      var o = String(b.opened || '');
+      var when = /^\d{8}-\d{6}$/.test(o)
+        ? o.slice(6, 8) + '/' + o.slice(4, 6) + '/' + o.slice(0, 4) + ' ' + o.slice(9, 11) + ':' + o.slice(11, 13) + ':' + o.slice(13, 15)
+        : '';
+      $('appVersion').textContent = 'เวอร์ชัน ' + (b.commit === 'dev' ? 'พัฒนา (dev)' : b.commit.slice(0, 7)) +
+        suffix + (when ? ' · เปิดเมื่อ ' + when : '');
+    }
     $('appVersion').title = 'v=' + b.v;
   }
 

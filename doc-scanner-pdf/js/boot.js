@@ -10,12 +10,14 @@
  * window.AppPlatform — จุดเดียวที่โค้ดของแอปใช้หาไฟล์ขณะทำงาน (worker, OpenCV, Tesseract, ฟอนต์, jsPDF)
  * เวอร์ชัน Google Apps Script (repo claude4gas) แทนที่ไฟล์นี้ด้วย AppPlatform ของตัวเอง
  * ที่ส่งไฟล์ผ่าน google.script.run — โค้ดส่วนอื่นของแอปจึงใช้ร่วมกันได้ทั้งสองแบบโดยไม่ต้องแก้
+ * แพลตฟอร์มอื่นเพิ่ม hook ที่ไม่บังคับได้ เช่น versionLabel (เลขรุ่นที่แสดงแทนเลข commit — แอป Android: v1.0.N),
+ * saveFile/shareFile/shareText/cameraHelp (แอป Android ที่บันทึก/แชร์ผ่านระบบ)
  */
 (function () {
   'use strict';
 
   var HEX = /^[0-9a-f]{7,40}$/;
-  var BUILD = '6a43e788461c';
+  var BUILD = '8ee787d3d2dd';
   var commit = HEX.test(BUILD) ? BUILD : 'dev';
   // เวอร์ชันของหน้า HTML เอง (อาจค้างในแคชคนละรุ่นกับ boot.js)
   var meta = document.querySelector('meta[name="app-build"]');
