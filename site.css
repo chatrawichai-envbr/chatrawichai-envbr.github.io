@@ -1,0 +1,18 @@
+/* หน้าแรกและหน้าลิงก์เดิมของ chatrawichai-tech.github.io (ไม่มีสคริปต์) */
+:root { color-scheme: light dark; --bg: #f4f6fb; --card: #fff; --text: #172033; --muted: #5b6478; --primary: #1f5eff; --border: #dde3ee; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1420; --card: #182033; --text: #e8ecf5; --muted: #9aa4ba; --primary: #6f97ff; --border: #2a3450; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", Tahoma, sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: 48px 16px; }
+h1 { margin: 0 0 4px; font-size: 1.6rem; }
+p { margin: 0 0 16px; color: var(--muted); }
+.apps { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 12px; }
+.app { display: block; padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; background: var(--card);
+  color: inherit; text-decoration: none; }
+.app:hover, .app:focus-visible { border-color: var(--primary); outline: none; }
+.app strong { display: block; font-size: 1.15rem; color: var(--primary); }
+.app span { color: var(--muted); }
+a { color: var(--primary); }
