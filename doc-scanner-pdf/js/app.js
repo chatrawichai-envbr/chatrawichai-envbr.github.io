@@ -10,6 +10,7 @@
   var THUMB_SIDE = 360;
   var MAX_FILE_BYTES = 60 * 1024 * 1024;
   var MAX_PIXELS = 120e6;
+  var MAX_HEIF_PIXELS = 50e6;         // HEIC ถอดรหัสเป็น RGBA ในหน่วยความจำทั้งภาพ (50 MP ≈ 200 MB)
   var MAX_PAGES = 200;
   var SOURCE_CACHE_SIZE = 2;
   var IMAGE_EXT = /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif|tiff?)$/i;
@@ -113,9 +114,37 @@
     });
   }
 
+  /**
+   * รูป HEIC/HEIF ที่เบราว์เซอร์ถอดรหัสเองไม่ได้ (Chrome, Edge, Firefox, WebView ของ Android) → libheif (js/heic.js)
+   * ย่อให้ด้านยาวไม่เกิน MAX_SOURCE_SIDE เหมือนรูปอื่น — canvas ที่ได้มี fromHeif = true
+   */
+  async function decodeHeifToCanvas(blob) {
+    var img = await window.HeicDecoder.decode(blob, MAX_HEIF_PIXELS);
+    var full = makeCanvas(img.width, img.height);
+    full.getContext('2d').putImageData(img, 0, 0);
+    var s = Math.min(1, MAX_SOURCE_SIDE / Math.max(img.width, img.height));
+    var c = full;
+    if (s < 1) {
+      c = makeCanvas(img.width * s, img.height * s);
+      var ctx = c.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(full, 0, 0, c.width, c.height);
+      releaseCanvas(full);
+    }
+    c.fromHeif = true;
+    return c;
+  }
+
   /** ถอดรหัสไฟล์รูปเป็น canvas โดยย่อให้ด้านยาวไม่เกิน MAX_SOURCE_SIDE (เคารพ EXIF orientation) */
   async function decodeToCanvas(blob) {
-    var r = await loadImageElement(blob);
+    var r;
+    try {
+      r = await loadImageElement(blob);
+    } catch (e) {
+      if (window.HeicDecoder && await window.HeicDecoder.isHeif(blob)) return decodeHeifToCanvas(blob);
+      throw e;
+    }
     try {
       var w = r.img.naturalWidth, h = r.img.naturalHeight;
       if (!w || !h) throw new Error('decode');
@@ -224,6 +253,8 @@
       try {
         if (gen !== addGeneration) return false;
         canvas = await decodeToCanvas(blob);
+        // HEIC: เก็บหน้าเป็น JPEG คุณภาพสูง — เปิดซ้ำ/สร้าง PDF ไม่ต้องถอดรหัส HEIC ใหม่ทุกครั้ง
+        if (canvas.fromHeif) blob = (await canvasToBlob(canvas, 'image/jpeg', 0.95)) || blob;
         await prev; // รอให้ไฟล์ก่อนหน้าถูกใส่ก่อน เพื่อคงลำดับหน้า
         if (gen !== addGeneration) { releaseCanvas(canvas); return false; }
         var page = createPage(blob, name, canvas);

@@ -17,7 +17,7 @@
 
 | ฟังก์ชัน | รายละเอียด |
 |---|---|
-| นำเข้าภาพ | ถ่ายด้วยกล้องในแอป (ถ่ายต่อเนื่องหลายหน้า มีกรอบตรวจจับเอกสารแบบสด + ไฟแฟลช), เปิดกล้องของเครื่อง, เลือกหลายรูปจากคลังภาพ, ลากไฟล์มาวาง, วางจากคลิปบอร์ด (Ctrl+V) |
+| นำเข้าภาพ | ถ่ายด้วยกล้องในแอป (ถ่ายต่อเนื่องหลายหน้า มีกรอบตรวจจับเอกสารแบบสด + ไฟแฟลช), เปิดกล้องของเครื่อง, เลือกหลายรูปจากคลังภาพ, ลากไฟล์มาวาง, วางจากคลิปบอร์ด (Ctrl+V) — รองรับ JPEG, PNG, WebP, **HEIC/HEIF** (รูปจาก iPhone และมือถือ Android หลายรุ่น — ถอดรหัสในเครื่องแม้เบราว์เซอร์จะเปิดเองไม่ได้), GIF, BMP, AVIF |
 | ครอปตามขอบกระดาษ | ตรวจจับขอบกระดาษอัตโนมัติ แล้วดัดภาพที่ถ่ายเอียงให้ตรง (perspective correction) |
 | ครอปอิสระ | ลากมุมทั้ง 4 หรือลากขอบได้อย่างอิสระ มีแว่นขยายช่วยวางมุมให้แม่น, ปุ่ม "เต็มภาพ", ใช้ปุ่มลูกศรบนคีย์บอร์ดได้ |
 | ปรับแสง | แถบเลื่อนเพิ่ม/ลดความสว่าง และความคมชัด (คอนทราสต์) |
@@ -98,6 +98,7 @@
 | OpenCV.js 4.10.0 แบบ SIMD | `vendor/opencv/simd/` | สร้างจากซอร์สทางการ OpenCV 4.10.0 ด้วยสคริปต์ทางการ `build_js.py` | Apache-2.0 |
 | OpenCV.js 4.10.0 แบบพื้นฐาน | `vendor/opencv/basic/` | สร้างจากซอร์สเดียวกัน (สำหรับเบราว์เซอร์ที่ไม่รองรับ SIMD และการเปิดผ่าน `file://`) | Apache-2.0 |
 | Tesseract.js 7.0.0 + ข้อมูลภาษา tha/eng | `vendor/tesseract/` | ไฟล์เดียวกับ npm release ทางการ (ดู `vendor/tesseract/README.md`, `SHA256SUMS`) | Apache-2.0 |
+| libheif 1.23.2 (libheif-js, WebAssembly) | `vendor/libheif/` | ไฟล์เดียวกับ npm `libheif-js@1.23.2` — ถอดรหัส HEIC/HEIF, โหลดเฉพาะเมื่อเปิดไฟล์ HEIC (ดู `vendor/libheif/README.md`) | LGPL-3.0 |
 | jsPDF 4.2.1 | `vendor/jspdf/` | ไฟล์เดียวกับ npm release ทางการ (sha384 `qovJwSBb…T3` ตรงกับ npm) | MIT |
 | ฟอนต์ Sarabun Regular | `vendor/fonts/` | Google Fonts (ใช้ฝังในชั้นข้อความของ PDF ที่ค้นหาได้) | OFL-1.1 |
 | Noto Sans Thai | Google Fonts | ถ้าโหลดไม่ได้จะใช้ฟอนต์ของเครื่องแทน | OFL |
@@ -144,11 +145,13 @@ doc-scanner-pdf/
 │   ├── camera.js         กล้องในแอป
 │   ├── pdf-export.js     สร้าง PDF ด้วย jsPDF (+ ชั้นข้อความ OCR ที่มองไม่เห็น)
 │   ├── ocr.js            แปลงภาพเป็นข้อความด้วย Tesseract.js
+│   ├── heic.js           เปิดรูป HEIC/HEIF ที่เบราว์เซอร์ถอดรหัสเองไม่ได้ (libheif ใน heic-worker.js)
 │   └── app.js            ควบคุมหน้าจอและลำดับงาน
 └── vendor/
     ├── opencv/           OpenCV.js (simd/, basic/, LICENSE, SHA256SUMS)
     ├── tesseract/        Tesseract.js (worker, core/, lang/ tha+eng, LICENSE, SHA256SUMS)
     ├── jspdf/            jsPDF (jspdf.umd.min.js, LICENSE)
+    ├── libheif/          libheif-bundle.js (LGPL-3.0, LICENSE-libheif, SHA256SUMS)
     └── fonts/            Sarabun-Regular.ttf (OFL.txt, SHA256SUMS)
 ```
 
