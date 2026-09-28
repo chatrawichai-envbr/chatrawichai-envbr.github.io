@@ -105,4 +105,10 @@ jobs:
           grep -qF 'content="0; url=/doc-scanner-pdf/"' <<<"$old" || { echo "::error::/claude/ does not redirect to /doc-scanner-pdf/"; exit 1; }
           app="$(curl -fsS "${SITE}/doc-scanner-pdf/?t=$(date +%s%N)")"
           grep -qF "js/boot.js?v=${build}\"" <<<"$app" || { echo "::error::/doc-scanner-pdf/ does not serve index.html of ${build}"; exit 1; }
-          echo "home page, /claude/ redirect and /doc-scanner-pdf/ OK"
+          if [ -d doc-scanner-pdf-android ]; then
+            grep -qF 'href="/doc-scanner-pdf-android/"' <<<"$home" || { echo "::error::home page does not link the Android app"; exit 1; }
+            file="$(jq -r '.file' doc-scanner-pdf-android/version.json)"
+            page="$(curl -fsS "${SITE}/doc-scanner-pdf-android/?t=$(date +%s%N)")"
+            grep -qF "href=\"$file\" download" <<<"$page" || { echo "::error::/doc-scanner-pdf-android/ does not offer $file"; exit 1; }
+          fi
+          echo "home page, /claude/ redirect, /doc-scanner-pdf/ and the Android download page OK"
