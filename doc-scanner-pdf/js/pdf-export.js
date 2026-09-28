@@ -281,7 +281,7 @@
   }
 
   /**
-   * บันทึกไฟล์ (PDF หรือ .txt) — คืน Promise<boolean>: false = ผู้ใช้ยกเลิก
+   * บันทึกไฟล์ (PDF, .txt, .jpg, .zip, .docx) — คืน Promise<boolean>: false = ผู้ใช้ยกเลิก
    * แพลตฟอร์มที่ดาวน์โหลดแบบเว็บไม่ได้ (เช่น แอป Android) บันทึกเองผ่าน AppPlatform.saveFile(blob, filename)
    */
   function download(blob, filename) {
@@ -305,11 +305,12 @@
     return Promise.resolve(true);
   }
 
-  function canShareFiles() {
+  /** แชร์ไฟล์ได้ไหม — type/name: ชนิดไฟล์ที่จะแชร์ (ค่าเริ่มต้น PDF; เบราว์เซอร์บางตัวแชร์ .zip/.docx ไม่ได้) */
+  function canShareFiles(type, name) {
     if (platformFn('shareFile')) return true;
     try {
       if (!navigator.share || !navigator.canShare || typeof File !== 'function') return false;
-      var f = new File([new Uint8Array(1)], 'test.pdf', { type: 'application/pdf' });
+      var f = new File([new Uint8Array(1)], name || 'test.pdf', { type: type || 'application/pdf' });
       return navigator.canShare({ files: [f] });
     } catch (_) {
       return false;
@@ -325,7 +326,7 @@
         return Promise.reject(e);
       }
     }
-    var file = new File([blob], filename, { type: 'application/pdf' });
+    var file = new File([blob], filename, { type: blob.type || 'application/pdf' });
     return navigator.share({ files: [file], title: filename });
   }
 

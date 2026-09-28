@@ -7,7 +7,7 @@
  *     แต่ไม่ต้องดาวน์โหลดซ้ำหลาย MB ทุกครั้งที่เปิดหน้า
  *   - ถ้าหน้า HTML เองค้างในแคช (commit ไม่ตรงกับ version.json) จะโหลดหน้าใหม่ 1 ครั้งด้วย URL ใหม่
  *
- * window.AppPlatform — จุดเดียวที่โค้ดของแอปใช้หาไฟล์ขณะทำงาน (worker, OpenCV, Tesseract, ฟอนต์, jsPDF)
+ * window.AppPlatform — จุดเดียวที่โค้ดของแอปใช้หาไฟล์ขณะทำงาน (worker, OpenCV, Tesseract, ฟอนต์, jsPDF, PDF.js)
  * เวอร์ชัน Google Apps Script (repo claude4gas) แทนที่ไฟล์นี้ด้วย AppPlatform ของตัวเอง
  * ที่ส่งไฟล์ผ่าน google.script.run — โค้ดส่วนอื่นของแอปจึงใช้ร่วมกันได้ทั้งสองแบบโดยไม่ต้องแก้
  * แพลตฟอร์มอื่นเพิ่ม hook ที่ไม่บังคับได้ เช่น versionLabel (เลขรุ่นที่แสดงแทนเลข commit — แอป Android: v1.0.N),
@@ -17,7 +17,7 @@
   'use strict';
 
   var HEX = /^[0-9a-f]{7,40}$/;
-  var BUILD = 'f8582b3788e0';
+  var BUILD = 'a7650a62f6f2';
   var commit = HEX.test(BUILD) ? BUILD : 'dev';
   // เวอร์ชันของหน้า HTML เอง (อาจค้างในแคชคนละรุ่นกับ boot.js)
   var meta = document.querySelector('meta[name="app-build"]');
@@ -40,6 +40,12 @@
     ['js/pdf-export.js'],
     ['js/ocr.js'],
     ['js/heic.js'],
+    ['js/zip.js'],
+    ['js/thai-text.js'],
+    ['js/docx.js'],
+    ['js/pdf-actualtext.js'],
+    ['js/pdf-tools.js'],
+    ['js/pdf-convert.js'],
     ['js/app.js']
   ];
 

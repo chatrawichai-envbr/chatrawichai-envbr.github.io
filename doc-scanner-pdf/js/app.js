@@ -301,6 +301,13 @@
 
   async function addFiles(fileList) {
     var files = Array.prototype.slice.call(fileList || []);
+    // ไฟล์ PDF (ลากมาวาง/เลือกมา) → หน้าต่าง "แปลงไฟล์ PDF" ครั้งละ 1 ไฟล์
+    var pdfs = window.PdfConvert ? files.filter(PdfConvert.isPdf) : [];
+    if (pdfs.length) {
+      files = files.filter(function (f) { return pdfs.indexOf(f) < 0; });
+      if (pdfs.length > 1) toast('แปลงไฟล์ PDF ได้ครั้งละ 1 ไฟล์ — เปิด "' + pdfs[0].name + '"', 'error');
+      PdfConvert.open(pdfs[0]);
+    }
     if (!files.length) return;
     var n = await addBlobs(files.map(function (f) { return { blob: f, name: f.name }; }));
     if (n) toast('เพิ่ม ' + n + ' หน้าแล้ว', 'ok');

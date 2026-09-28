@@ -146,6 +146,8 @@ h2 { font-size: 1.05rem; font-weight: 600; }
 @media (min-width: 560px) { .source-actions { grid-auto-flow: column; grid-auto-columns: 1fr; grid-template-columns: none; } }
 .hint { font-size: .88rem; margin: 10px 0 0; }
 .drop-hint { text-align: center; }
+.tools-row { display: flex; justify-content: center; max-width: 560px; margin: 14px auto 0; }
+.tools-row .btn { width: 100%; }
 .app-version { text-align: center; font-size: .75rem; margin: 28px 0 0; opacity: .8; }
 @media (pointer: coarse) { .drop-hint { display: none; } }
 
@@ -408,6 +410,7 @@ input[type="range"] { width: 100%; height: 32px; margin: 2px 0 0; accent-color: 
 }
 .field-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
 @media (min-width: 440px) { .field-grid { grid-template-columns: 1fr 1fr; } }
+.field-grid .field-wide { grid-column: 1 / -1; } /* ตัวเลือกที่ข้อความยาว ไม่ให้ถูกตัดในแบบ 2 คอลัมน์ */
 .progress-wrap { display: flex; flex-direction: column; gap: 6px; font-size: .9rem; }
 progress { width: 100%; height: 10px; accent-color: var(--primary); }
 .ex-result { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); font-size: .92rem; background: rgba(23, 160, 93, .14); background: color-mix(in srgb, var(--ok) 14%, transparent); }
@@ -422,6 +425,11 @@ progress { width: 100%; height: 10px; accent-color: var(--primary); }
 }
 .ocr-text:focus-visible { outline: 3px solid var(--primary); outline-offset: 1px; }
 .hint.warn { color: var(--warn); font-weight: 500; }
+.chips.chips-2 { grid-template-columns: repeat(2, 1fr); }
+.file-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.file-info { flex: 1 1 160px; min-width: 0; font-size: .9rem; overflow-wrap: anywhere; }
+.password-row { display: flex; align-items: flex-end; gap: 8px; }
+.password-row .field { flex: 1; }
 
 /* ---------- Drop zone / Toast ---------- */
 .drop-zone {
