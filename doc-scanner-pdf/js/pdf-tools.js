@@ -46,6 +46,17 @@
 
   var libPromise = null;
   var loadAttempt = 0;
+  var workerMode = null;             // 'worker' | 'page' — วิธีที่ใช้รันตัวอ่าน PDF ครั้งล่าสุด (สำหรับทดสอบ)
+
+  // PDF.js (แม้รุ่น legacy) ใช้ Promise.withResolvers ซึ่ง Chrome/WebView ก่อน 119 และ Safari ก่อน 17.4 ยังไม่มี
+  // (ฟังก์ชันใหม่อื่น ๆ PDF.js รุ่น legacy เติมให้เองแล้ว) — เติมในหน้าเว็บ ส่วนใน worker เติมโดย js/pdf-worker.js
+  if (typeof Promise.withResolvers !== 'function') {
+    Promise.withResolvers = function () {
+      var resolve, reject;
+      var promise = new this(function (a, b) { resolve = a; reject = b; });
+      return { promise: promise, resolve: resolve, reject: reject };
+    };
+  }
 
   function platform() {
     if (!window.AppPlatform) throw new Error('ไม่พบ AppPlatform (js/boot.js)');
@@ -75,7 +86,7 @@
         return import(url).then(function (lib) {
           if (!lib || typeof lib.getDocument !== 'function') throw new Error('bad module');
           lib.GlobalWorkerOptions.workerSrc = urls[1];
-          return lib;
+          return { lib: lib, workerSrc: urls[1] };
         });
       }).catch(function (e) {
         console.warn('PDF.js', e);
@@ -88,6 +99,38 @@
 
   function preload() {
     if (isSupported()) loadLib().catch(function () { /* แจ้งตอนเปิดไฟล์จริง */ });
+  }
+
+  /**
+   * Worker ของ PDF.js ผ่าน js/pdf-worker.js (เติม Promise.withResolvers ก่อนโหลด PDF.js) — คืน { port, pdfWorker, failed }
+   * failed: Promise ที่ reject เมื่อ worker โหลดไม่สำเร็จ (PDF.js จะรอคำตอบตลอดไปถ้าไม่ตรวจเอง)
+   * ถ้าเบราว์เซอร์สร้าง module worker ไม่ได้เลย → รันตัวอ่านในหน้าเว็บแทน (ช้ากว่า แต่ใช้งานได้)
+   */
+  async function startWorker(loaded) {
+    var lib = loaded.lib;
+    var port = null;
+    try {
+      var shim = await platform().resolve('js/pdf-worker.js');
+      port = new Worker(shim, { type: 'module', name: loaded.workerSrc });
+    } catch (e) {
+      port = null;
+    }
+    if (!port) {
+      if (!globalThis.pdfjsWorker) await import(loaded.workerSrc); // ไฟล์ตั้ง globalThis.pdfjsWorker เอง → PDF.js ใช้ในหน้าเว็บ
+      workerMode = 'page';
+      return { port: null, pdfWorker: null, failed: new Promise(function () {}) };
+    }
+    var failed = new Promise(function (resolve, reject) {
+      port.addEventListener('error', function (ev) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        var err = new Error('โหลดตัวอ่านไฟล์ PDF ไม่สำเร็จ' + (ev && ev.message ? ' (' + ev.message + ')' : ''));
+        err.workerFailed = true;
+        reject(err);
+      });
+    });
+    failed.catch(function () { /* จัดการตอนรอเปิดไฟล์ */ });
+    workerMode = 'worker';
+    return { port: port, pdfWorker: new lib.PDFWorker({ port: port }), failed: failed };
   }
 
   /**
@@ -132,9 +175,24 @@
     if (file.size > MAX_FILE_BYTES) throw new Error('ไฟล์ใหญ่เกิน ' + Math.round(MAX_FILE_BYTES / 1048576) + ' MB');
     var bytes = new Uint8Array(await file.arrayBuffer());
     if (!hasPdfHeader(bytes)) throw new Error('ไฟล์นี้ไม่ใช่ไฟล์ PDF');
-    var lib = await loadLib();
+    var loaded = await loadLib();
+    var lib = loaded.lib;
+    var w = await startWorker(loaded);
+    var stopped = false;
+    function stopWorker() {
+      if (stopped) return;
+      stopped = true;
+      if (w.pdfWorker) { try { w.pdfWorker.destroy(); } catch (e) { /* ignore */ } }
+      if (w.port) w.port.terminate();
+    }
+    /** ปิดเอกสาร (PDF.js ส่งคำสั่งปิดให้ worker) แล้วจึงปิด worker — ไม่เกิน 3 วินาที */
+    function close() {
+      var done = Promise.resolve().then(function () { return task.destroy(); }).catch(function () { /* ignore */ });
+      Promise.race([done, new Promise(function (r) { setTimeout(r, 3000); })]).then(stopWorker);
+    }
     var aborted = false;
     var task = lib.getDocument({
+      worker: w.pdfWorker || undefined,
       data: bytes,
       BinaryDataFactory: BinaryData,
       useWorkerFetch: false,
@@ -155,9 +213,10 @@
     };
     var pdf;
     try {
-      pdf = await task.promise;
+      pdf = await Promise.race([task.promise, w.failed]);
     } catch (e) {
-      task.destroy();
+      close();
+      if (e && e.workerFailed) throw e;
       if (aborted) {
         var err = new Error('ไฟล์นี้มีรหัสผ่าน — ต้องใส่รหัสผ่านเพื่อเปิด');
         err.cancelled = true;
@@ -174,7 +233,7 @@
       lib: lib,
       // ข้อความแทน (/ActualText) ที่ PDF.js ไม่ส่งออกมา — อ่านไฟล์เองเมื่อหน้ามี marked content (js/pdf-actualtext.js)
       actual: window.PdfActualText ? PdfActualText.create(function () { return pdf.getData(); }) : null,
-      destroy: function () { try { task.destroy(); } catch (e) { /* ignore */ } }
+      destroy: close
     };
   }
 
@@ -624,6 +683,8 @@
     MAX_FILE_BYTES: MAX_FILE_BYTES,
     isSupported: isSupported,
     preload: preload,
+    /** วิธีที่รันตัวอ่าน PDF: { mode: 'worker' | 'page' | null } */
+    info: function () { return { mode: workerMode }; },
     open: open,
     parsePages: parsePages,
     toJpeg: toJpeg,
