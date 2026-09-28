@@ -48,15 +48,59 @@
   var loadAttempt = 0;
   var workerMode = null;             // 'worker' | 'page' — วิธีที่ใช้รันตัวอ่าน PDF ครั้งล่าสุด (สำหรับทดสอบ)
 
-  // PDF.js (แม้รุ่น legacy) ใช้ Promise.withResolvers ซึ่ง Chrome/WebView ก่อน 119 และ Safari ก่อน 17.4 ยังไม่มี
-  // (ฟังก์ชันใหม่อื่น ๆ PDF.js รุ่น legacy เติมให้เองแล้ว) — เติมในหน้าเว็บ ส่วนใน worker เติมโดย js/pdf-worker.js
-  if (typeof Promise.withResolvers !== 'function') {
-    Promise.withResolvers = function () {
+  // ---- ฟังก์ชันที่ PDF.js ใช้แต่เบราว์เซอร์/WebView รุ่นเก่ายังไม่มี (PDF.js รุ่น legacy ไม่ได้เติมให้) ----
+  // เหมือนกันทุกตัวอักษรใน js/pdf-tools.js (หน้าเว็บ) และ js/pdf-worker.js (worker) — แก้ต้องแก้ทั้งสองที่
+  //   Promise.withResolvers (Chrome 119, Safari 17.4), for await กับ ReadableStream (Chrome 124),
+  //   Response/Blob.bytes() (Chrome 132, Safari 18), ArrayBuffer.transferToFixedLength (Chrome 114)
+  function addPolyfills(g) {
+    function define(obj, name, fn) {
+      if (obj && typeof obj[name] !== 'function') {
+        Object.defineProperty(obj, name, { value: fn, writable: true, configurable: true, enumerable: false });
+      }
+    }
+    define(g.Promise, 'withResolvers', function () {
       var resolve, reject;
       var promise = new this(function (a, b) { resolve = a; reject = b; });
       return { promise: promise, resolve: resolve, reject: reject };
-    };
+    });
+    var RS = g.ReadableStream && g.ReadableStream.prototype;
+    if (RS && typeof RS[Symbol.asyncIterator] !== 'function') {
+      define(RS, 'values', function (opts) {
+        var reader = this.getReader();
+        var preventCancel = !!(opts && opts.preventCancel);
+        var it = {
+          next: function () {
+            return reader.read().then(function (r) {
+              if (r.done) reader.releaseLock();
+              return r;
+            }, function (e) { reader.releaseLock(); throw e; });
+          },
+          'return': function (value) {
+            var end = function () { return { done: true, value: value }; };
+            if (preventCancel) { reader.releaseLock(); return Promise.resolve(end()); }
+            var p = reader.cancel(value);
+            reader.releaseLock();
+            return p.then(end, end);
+          }
+        };
+        it[Symbol.asyncIterator] = function () { return this; };
+        return it;
+      });
+      define(RS, Symbol.asyncIterator, RS.values);
+    }
+    ['Response', 'Blob'].forEach(function (name) {
+      define(g[name] && g[name].prototype, 'bytes', function () {
+        return this.arrayBuffer().then(function (b) { return new Uint8Array(b); });
+      });
+    });
+    define(g.ArrayBuffer.prototype, 'transferToFixedLength', function (length) {
+      var n = length === undefined ? this.byteLength : Math.max(0, Math.floor(length));
+      var out = new ArrayBuffer(n);
+      new Uint8Array(out).set(new Uint8Array(this, 0, Math.min(n, this.byteLength)));
+      return out;
+    });
   }
+  addPolyfills(globalThis);
 
   function platform() {
     if (!window.AppPlatform) throw new Error('ไม่พบ AppPlatform (js/boot.js)');

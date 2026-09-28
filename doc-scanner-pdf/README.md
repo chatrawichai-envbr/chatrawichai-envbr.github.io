@@ -175,7 +175,7 @@ doc-scanner-pdf/
 │   ├── docx.js           สร้างไฟล์ Word (.docx) ภาษาไทย
 │   ├── pdf-actualtext.js อ่าน /ActualText ในไฟล์ PDF (ข้อความจริงของสระ/วรรณยุกต์ที่ฟอนต์ไม่บอกรหัส)
 │   ├── pdf-tools.js      แปลง PDF เป็น JPG / Word ด้วย PDF.js
-│   ├── pdf-worker.js     Web Worker ของ PDF.js (เติม Promise.withResolvers ให้เบราว์เซอร์/WebView รุ่นเก่า)
+│   ├── pdf-worker.js     Web Worker ของ PDF.js (เติมฟังก์ชันที่เบราว์เซอร์/WebView รุ่นเก่ายังไม่มี)
 │   ├── pdf-convert.js    หน้าต่าง "แปลงไฟล์ PDF"
 │   └── app.js            ควบคุมหน้าจอและลำดับงาน
 └── vendor/
