@@ -11,7 +11,7 @@
 
 **แอป Android (มือถือและแท็บเล็ต):** [`chatrawichai-tech/claude4app`](https://github.com/chatrawichai-tech/claude4app)
 (โฟลเดอร์ `doc-scanner-pdf-android/`) — แปลงอัตโนมัติจากโค้ดชุดนี้ ทำงานในเครื่องโดยไม่ต้องใช้อินเทอร์เน็ต
-ดาวน์โหลดไฟล์ APK ได้ที่หน้า [Releases](https://github.com/chatrawichai-tech/claude4app/releases)
+ดาวน์โหลดไฟล์ APK (รุ่นล่าสุด เซ็นด้วยกุญแจถาวร) ได้ที่ https://chatrawichai-tech.github.io/doc-scanner-pdf-android/
 
 ## ความสามารถ
 
