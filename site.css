@@ -16,3 +16,7 @@ p { margin: 0 0 16px; color: var(--muted); }
 .app strong { display: block; font-size: 1.15rem; color: var(--primary); }
 .app span { color: var(--muted); }
 a { color: var(--primary); }
+h2 { margin: 28px 0 8px; font-size: 1.15rem; }
+ol, ul:not(.apps) { margin: 0 0 16px; padding-left: 1.4em; color: var(--muted); }
+li { margin: 4px 0; }
+code.hash { font: .85rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text); word-break: break-all; }

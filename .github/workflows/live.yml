@@ -3,6 +3,8 @@
 #   https://chatrawichai-tech.github.io/doc-scanner-pdf/   the app, published from the private repo chatrawichai-tech/claude
 #                                                          by its tools/publish-site.sh (never edited here)
 #   https://chatrawichai-tech.github.io/claude/            the app's old address → redirects to /doc-scanner-pdf/
+#   https://chatrawichai-tech.github.io/doc-scanner-pdf-android/   the Android app's signed APK and download page, pushed by
+#                                                          the release job of chatrawichai-tech/claude4app (never edited here)
 #
 # After every push (and daily): the committed app is a stamped build, and the live site serves this exact commit,
 # every file byte for byte. Actions are pinned to full commit SHAs.
@@ -44,6 +46,15 @@ jobs:
           grep -qF "var BUILD = '${build}';" doc-scanner-pdf/js/boot.js || { echo "::error::boot.js is not stamped with ${build}"; exit 1; }
           if grep -rl "__APP_BUILD__" doc-scanner-pdf; then echo "::error::unstamped placeholder left"; exit 1; fi
           [ -f .nojekyll ] || { echo "::error::.nojekyll is missing (Jekyll would process the site)"; exit 1; }
+          if [ -d doc-scanner-pdf-android ]; then
+            apks=(doc-scanner-pdf-android/*.apk)
+            [ "${#apks[@]}" = 1 ] && [ -f "${apks[0]}" ] || { echo "::error::doc-scanner-pdf-android must hold exactly one APK"; exit 1; }
+            file="$(jq -r '.file' doc-scanner-pdf-android/version.json)"
+            [ "doc-scanner-pdf-android/$file" = "${apks[0]}" ] || { echo "::error::version.json names $file, folder has ${apks[0]}"; exit 1; }
+            [ "$(jq -r '.sha256' doc-scanner-pdf-android/version.json)" = "$(sha256sum "${apks[0]}" | cut -d' ' -f1)" ] || { echo "::error::APK does not match its SHA-256 in version.json"; exit 1; }
+            grep -qF "href=\"$file\" download" doc-scanner-pdf-android/index.html || { echo "::error::the download page does not link $file"; exit 1; }
+            echo "doc-scanner-pdf-android is $(jq -r '.version' doc-scanner-pdf-android/version.json)"
+          fi
           echo "build=${build}" >> "$GITHUB_ENV"
           echo "doc-scanner-pdf is claude@${build}"
 
@@ -72,7 +83,7 @@ jobs:
             got="$(curl -fsS "${SITE}/${f}?t=$(date +%s%N)" | sha256sum | cut -d' ' -f1)" || got="missing"
             count=$((count + 1))
             if [ "$want" != "$got" ]; then echo "::error::${SITE}/${f} is not the committed file"; bad=1; fi
-          done < <(git ls-files -z -- doc-scanner-pdf index.html site.css claude)
+          done < <(git ls-files -z -- doc-scanner-pdf doc-scanner-pdf-android index.html site.css claude)
           [ "$bad" = 0 ] || exit 1
           echo "${count} files served exactly as committed"
 
