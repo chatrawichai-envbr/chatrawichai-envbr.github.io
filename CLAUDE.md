@@ -8,8 +8,9 @@ GitHub Pages user site of chatrawichai-tech (https://chatrawichai-tech.github.io
 - `doc-scanner-pdf/` — **generated** by claude4code's `tools/publish-site.sh` (git archive of claude4code's `doc-scanner-pdf/` at a
   commit + `tools/stamp-build.sh`; `version.json` = that claude4code commit). Never edit it here: change claude4code, test, publish.
 - `doc-scanner-pdf-android/` — **generated** by the release job of `chatrawichai-tech/claude4app` (`tools/site/build-page.js`):
-  the latest signed APK (only one, checked to be signed with the permanent key), `index.html` download page and
-  `version.json` (version, SHA-256, signing certificate). Pushed with the write deploy key `SITE_DEPLOY_KEY` (claude4app
+  the latest signed APK (only one, checked to be signed with the permanent key), `index.html` download page,
+  `privacy.html` (the app's privacy policy, Thai + English — its URL is given to Google Play) and `version.json`
+  (version, SHA-256, signing certificate). Pushed with the write deploy key `SITE_DEPLOY_KEY` (claude4app
   secret); never edit it here — change claude4app's page builder and release again.
 - `index.html`, `site.css` — home page listing the apps. `claude/index.html` — the app's old address
   (`/claude/`, the former project site of the repo when it was named `claude`) redirecting to `/doc-scanner-pdf/`.

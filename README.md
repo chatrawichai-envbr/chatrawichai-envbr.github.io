@@ -40,7 +40,7 @@ git add -A && git commit -m "Publish doc-scanner-pdf from claude4code@<commit>" 
 
 ทุกครั้งที่ CI ของ `claude4app` ออก Release ใหม่ (ทดสอบบน emulator มือถือ มือถือจอเล็ก และแท็บเล็ตผ่านครบ) งาน `site`
 จะตรวจว่า APK เซ็นด้วยกุญแจถาวร แล้ว push โฟลเดอร์ `doc-scanner-pdf-android/` มาที่ repo นี้ (APK รุ่นล่าสุดไฟล์เดียว, `index.html`,
-`version.json` ที่มี SHA-256) ด้วย deploy key ที่เขียนได้เฉพาะ repo นี้ (secret `SITE_DEPLOY_KEY` ใน claude4app)
+`privacy.html` นโยบายความเป็นส่วนตัวของแอปที่ใช้กับ Google Play, `version.json` ที่มี SHA-256) ด้วย deploy key ที่เขียนได้เฉพาะ repo นี้ (secret `SITE_DEPLOY_KEY` ใน claude4app)
 
 ## การตรวจสอบ
 
