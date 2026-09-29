@@ -76,7 +76,7 @@ h2 { font-size: 1.05rem; font-weight: 600; }
 .btn:hover { border-color: var(--primary); }
 .btn:active { transform: scale(.97); }
 .btn:focus-visible, .chip:focus-visible, .page-card:focus-visible, .shutter:focus-visible,
-.cam-btn:focus-visible, input:focus-visible, select:focus-visible {
+.cam-btn:focus-visible, .lang-btn:focus-visible, input:focus-visible, select:focus-visible {
   outline: 3px solid var(--primary); outline: 3px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset: 2px;
 }
 .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
@@ -124,6 +124,23 @@ h2 { font-size: 1.05rem; font-weight: 600; }
 .status-pill[data-state="error"] { color: var(--danger); }
 .status-pill[data-state="error"] .dot { background: var(--danger); }
 @keyframes pulse { 50% { opacity: .3; } }
+.lang-btn {
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  min-height: 44px; padding: 4px 12px; border-radius: 999px;
+  font: inherit; font-size: .85rem; font-weight: 600; color: var(--primary);
+  background: transparent; border: 1px solid var(--border); cursor: pointer; touch-action: manipulation;
+}
+.lang-btn .icon { width: 18px; height: 18px; }
+.lang-btn:hover { border-color: var(--primary); }
+/* จอแคบ: ชื่อแอปอยู่บรรทัดเดียวกับสถานะและปุ่มภาษา (ซ่อน "→ PDF" และเหลือไอคอนลูกโลกในจอที่แคบมาก) */
+@media (max-width: 440px) {
+  #viewHome .topbar { gap: 8px; }
+  #appTitle .muted { display: none; }
+}
+@media (max-width: 374px) {
+  .lang-btn { padding: 4px 12px; }
+  #btnLangText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 
 .home-main {
   flex: 1; width: 100%; max-width: 1100px; margin: 0 auto;
@@ -209,10 +226,11 @@ h2 { font-size: 1.05rem; font-weight: 600; }
     font-size: .74rem; line-height: 1.2;
   }
   .bottom-bar .btn:not(.grow) .icon { width: 20px; height: 20px; }
-  .bottom-bar .btn.grow { min-width: 0; }
+  .bottom-bar .btn.grow { min-width: 0; flex-wrap: wrap; align-content: center; row-gap: 0; line-height: 1.2; padding-top: 4px; padding-bottom: 4px; }
   .bottom-bar .btn.grow span { overflow: hidden; text-overflow: ellipsis; }
+  /* จำนวนหน้าอยู่บรรทัดที่สอง (ข้อความภาษาอังกฤษยาวกว่า ไม่ถูกตัด) */
+  .bottom-bar .btn.grow .count { flex-basis: 100%; text-align: center; font-size: .78rem; font-weight: 500; opacity: .9; }
 }
-@media (max-width: 360px) { #btnExportCount { display: none; } }
 
 /* ---------- หน้าแก้ไข ---------- */
 .editor-layout { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -256,7 +274,9 @@ h2 { font-size: 1.05rem; font-weight: 600; }
   font: inherit; font-size: .9rem; font-weight: 500; line-height: 1.25;
   color: var(--text); background: var(--surface); border: 1.5px solid var(--border);
   cursor: pointer; touch-action: manipulation;
+  transition: background-color .18s, border-color .18s, color .18s, transform .08s;
 }
+.chip:active { transform: scale(.96); }
 .chip[aria-checked="true"] {
   border-color: var(--primary); color: var(--primary);
   background: var(--surface-2); background: color-mix(in srgb, var(--primary) 10%, var(--surface));
@@ -447,12 +467,64 @@ progress { width: 100%; height: 10px; accent-color: var(--primary); }
 .toast {
   padding: 10px 16px; border-radius: 12px; font-size: .92rem; text-align: center;
   background: rgba(20, 26, 40, .94); color: #fff; box-shadow: 0 6px 24px rgba(0, 0, 0, .3);
-  animation: toastin .2s ease-out;
+  animation: toast-in .32s cubic-bezier(.2, .9, .3, 1.25);
 }
+.toast.toast-out { animation: toast-out .22s ease-in forwards; }
 .toast.error { background: #b3202f; }
 .toast.ok { background: #13784a; }
-@keyframes toastin { from { opacity: 0; transform: translateY(8px); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(.94); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(8px) scale(.96); } }
 
+/* ---------- แอนิเมชัน ----------
+   โทนเดียวกันทั้งแอป: เข้าเร็วแล้วค่อย ๆ หยุด (ease-out) 0.2–0.35 วินาที เคลื่อนที่ระยะสั้น — ไม่ขวางการใช้งาน
+   ใช้ fill-mode backwards (ไม่ใช่ both): หลังจบไม่มี transform ค้าง ปุ่ม/แถบที่ fixed ข้างในจึงอยู่ตำแหน่งเดิม
+   แอนิเมชันที่ต้องใช้โค้ด (รายการหน้า เงาของหน้าที่ลบ ตัวเลขเด้ง) อยู่ใน js/motion.js */
+.view { animation: fade-in .22s ease-out backwards; }
+.home-main, .editor-layout { animation: rise-in .34s cubic-bezier(.2, .8, .2, 1) backwards; }
+.camera:not([hidden]) { animation: fade-in .2s ease-out backwards; }
+.bottom-bar { animation: bar-up .34s cubic-bezier(.2, .8, .2, 1) .05s backwards; }
+.dialog[open] { animation: dialog-in .28s cubic-bezier(.2, .8, .2, 1); }
+.dialog[open]::backdrop { animation: fade-in .28s ease-out; }
+.ex-result, .hint.warn, .password-row { animation: rise-in .26s ease-out backwards; }
+.busy, .drop-zone, .cam-blocked { animation: fade-in .2s ease-out backwards; }
+.status-pill { transition: background-color .3s, color .3s; }
+#camCount { display: inline-block; }
+/* จุดมุมเด้งขึ้นเมื่อเปิดหน้าครอป (จุดกลางขอบหมุนด้วย attribute transform จึงใช้แค่จางเข้า) */
+.crop-svg circle.handle { transform-box: fill-box; transform-origin: center; animation: pop-in .36s cubic-bezier(.3, 1.5, .5, 1) .08s backwards; }
+.crop-svg rect.handle { animation: fade-in .3s ease-out .12s backwards; }
+@media (hover: hover) and (pointer: fine) {
+  .page-item { transition: transform .2s ease-out, box-shadow .2s ease-out; }
+  .page-item:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(20, 30, 60, .08), 0 10px 26px rgba(20, 30, 60, .16); }
+}
+/* หน้าแรก: เอกสารลอยเบา ๆ และเส้นสแกนเลื่อนขึ้นลง */
+.empty-art { position: relative; overflow: hidden; }
+.empty-art .icon { animation: art-float 3.4s ease-in-out infinite; }
+.empty-art::after {
+  content: ""; position: absolute; left: 14px; right: 14px; top: 16px; height: 3px; border-radius: 3px;
+  background: var(--primary); opacity: .8; pointer-events: none;
+  box-shadow: 0 0 12px 3px rgba(31, 94, 255, .35); box-shadow: 0 0 12px 3px color-mix(in srgb, var(--primary) 40%, transparent);
+  animation: scan-beam 2.8s ease-in-out infinite;
+}
+/* เงาของหน้าที่เพิ่งลบ (js/motion.js) — กดไม่ได้ โปรแกรมอ่านหน้าจอไม่เห็น */
+.motion-ghost {
+  position: fixed; z-index: 5; pointer-events: none; display: grid; place-items: center; padding: 8px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.motion-ghost img { max-width: 100%; max-height: 78%; box-shadow: 0 1px 4px rgba(0, 0, 0, .25); background: #fff; }
+
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes bar-up { from { transform: translateY(100%); } }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(16px) scale(.97); } }
+@keyframes pop-in { from { transform: scale(0); } }
+@keyframes art-float { 50% { transform: translateY(-3px); } }
+@keyframes scan-beam { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(49px); } }
+
+/* ผู้ใช้ตั้ง "ลดการเคลื่อนไหว": แอนิเมชันจบทันทีครั้งเดียว (ไม่วนเร็ว ๆ) และไม่มีเส้นสแกน — js/motion.js ก็หยุดเช่นกัน */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important;
+    transition-duration: .01ms !important;
+  }
+  .empty-art::after { display: none; }
 }

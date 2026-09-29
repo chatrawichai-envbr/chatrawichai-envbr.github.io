@@ -10,6 +10,7 @@
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
+  var t = I18n.t;      // ข้อความในภาษาที่เลือก (js/i18n.js)
   var OCR_LANGS = ['tha+eng', 'tha', 'eng'];
   var OCR_STATUS = {
     'loading tesseract core': 'กำลังโหลดตัวอ่านข้อความ…',
@@ -61,11 +62,14 @@
   function toast(msg, type) {
     var box = $('toasts');
     while (box.children.length >= 3) box.firstChild.remove();
-    var t = document.createElement('div');
-    t.className = 'toast' + (type ? ' ' + type : '');
-    t.textContent = msg;
-    box.appendChild(t);
-    setTimeout(function () { t.remove(); }, type === 'error' ? 5000 : 3200);
+    var el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.textContent = msg;
+    box.appendChild(el);
+    setTimeout(function () {
+      el.classList.add('toast-out');
+      setTimeout(function () { el.remove(); }, 240);
+    }, type === 'error' ? 5000 : 3200);
   }
 
   function isOpen() { return $('pdfDialog').hasAttribute('open'); }
@@ -93,13 +97,13 @@
     $('pdfLangField').hidden = jpg || !ocr || $('pdfMode').value === 'text';
     Array.prototype.forEach.call($('pdfMode').options, function (o) { o.disabled = o.value !== 'text' && !ocr; });
     if (!ocr) $('pdfMode').value = 'text';
-    $('pdfNote').textContent = NOTES[S.format];
-    $('pdfConvertText').textContent = jpg ? 'แปลงเป็น JPG' : 'แปลงเป็น Word';
+    $('pdfNote').textContent = t(NOTES[S.format]);
+    $('pdfConvertText').textContent = jpg ? t('แปลงเป็น JPG') : t('แปลงเป็น Word');
     var busy = S.busy;
     ['pdfPick', 'pdfQuality', 'pdfMode', 'pdfFont', 'pdfLang', 'pdfPages', 'pdfShare'].forEach(function (id) { $(id).disabled = busy; });
     Array.prototype.forEach.call($('pdfFormats').querySelectorAll('.chip'), function (c) { c.disabled = busy; });
     $('pdfConvert').disabled = busy || S.opening || !S.doc;
-    $('pdfCancel').textContent = busy ? 'หยุด' : 'ปิด';
+    $('pdfCancel').textContent = busy ? t('หยุด') : t('ปิด');
     $('pdfProgressWrap').hidden = !busy && !S.opening;
   }
 
@@ -135,9 +139,9 @@
   function askPassword(retry) {
     return new Promise(function (resolve) {
       S.password = { resolve: resolve };
-      $('pdfPasswordLabel').textContent = retry ? 'รหัสผ่านไม่ถูกต้อง — ลองอีกครั้ง' : 'ไฟล์นี้มีรหัสผ่าน — ใส่รหัสผ่านเพื่อเปิด';
+      $('pdfPasswordLabel').textContent = retry ? t('รหัสผ่านไม่ถูกต้อง — ลองอีกครั้ง') : t('ไฟล์นี้มีรหัสผ่าน — ใส่รหัสผ่านเพื่อเปิด');
       $('pdfPasswordRow').hidden = false;
-      $('pdfProgressText').textContent = 'รอรหัสผ่าน…';
+      $('pdfProgressText').textContent = t('รอรหัสผ่าน…');
       $('pdfPassword').value = '';
       try { $('pdfPassword').focus(); } catch (_) { /* ignore */ }
     });
@@ -151,7 +155,7 @@
     S.password = null;
     $('pdfPasswordRow').hidden = true;
     $('pdfPassword').value = '';
-    $('pdfProgressText').textContent = 'กำลังเปิดไฟล์…';
+    $('pdfProgressText').textContent = t('กำลังเปิดไฟล์…');
     p.resolve(pw);
   }
 
@@ -165,8 +169,8 @@
 
   /** เปิดไฟล์ PDF ในหน้าต่าง (แทนไฟล์เดิม) */
   function open(file) {
-    if (S.busy) { toast('กำลังแปลงไฟล์อยู่ — รอให้เสร็จหรือกด "หยุด" ก่อน', 'error'); return; }
-    if (!isPdf(file)) { toast('"' + String(file && file.name || '') + '" ไม่ใช่ไฟล์ PDF', 'error'); return; }
+    if (S.busy) { toast(t('กำลังแปลงไฟล์อยู่ — รอให้เสร็จหรือกด "หยุด" ก่อน'), 'error'); return; }
+    if (!isPdf(file)) { toast(t('"{name}" ไม่ใช่ไฟล์ PDF', { name: String(file && file.name || '') }), 'error'); return; }
     dropDoc();
     resetResult();
     showDialog();
@@ -175,15 +179,15 @@
     S.opening = true;
     setInfo(file.name + ' — ' + formatBytes(file.size));
     $('pdfProgress').removeAttribute('value');
-    $('pdfProgressText').textContent = 'กำลังเปิดไฟล์…';
+    $('pdfProgressText').textContent = t('กำลังเปิดไฟล์…');
     syncForm();
     PdfTools.open(file, { onPassword: askPassword }).then(function (doc) {
       if (token !== S.token) { doc.destroy(); return; }
       S.doc = doc;
-      setInfo(file.name + ' — ' + doc.numPages + ' หน้า, ' + formatBytes(file.size));
+      setInfo(t('{name} — {n} หน้า, {size}', { name: file.name, n: doc.numPages, size: formatBytes(file.size) }));
     }, function (e) {
       if (token !== S.token) return;
-      showResult(e && e.message ? e.message : String(e), true);
+      showResult(I18n.msg(e), true);
     }).then(function () {
       if (token !== S.token) return;
       S.opening = false;
@@ -195,7 +199,7 @@
   function pick() {
     if (S.busy) return;
     if (!PdfTools.isSupported()) {
-      toast('แปลงไฟล์ PDF ได้เมื่อเปิดผ่านเว็บไซต์ (https) เท่านั้น — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง', 'error');
+      toast(t('แปลงไฟล์ PDF ได้เมื่อเปิดผ่านเว็บไซต์ (https) เท่านั้น — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง'), 'error');
       return;
     }
     PdfTools.preload();
@@ -207,7 +211,7 @@
     if (S.busy) { cancel(); return; }
     dropDoc();
     resetResult();
-    setInfo('ยังไม่ได้เลือกไฟล์');
+    setInfo(t('ยังไม่ได้เลือกไฟล์'));
     var dlg = $('pdfDialog');
     if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open');
   }
@@ -216,44 +220,44 @@
     if (!S.busy || S.cancelled) return;
     S.cancelled = true;
     $('pdfCancel').disabled = true;
-    $('pdfProgressText').textContent = 'กำลังหยุด…';
+    $('pdfProgressText').textContent = t('กำลังหยุด…');
     if (S.format === 'docx' && window.Ocr) Ocr.cancelAll();
   }
 
   function progressText(done, total, pageNo, status, p) {
     if (S.format === 'jpg') {
       $('pdfProgress').value = Math.round(done / total * 100);
-      if (done >= total) return total > 1 ? 'กำลังรวมไฟล์ .zip…' : 'กำลังบันทึก…';
-      return 'กำลังแปลงหน้า ' + pageNo + ' (' + (done + 1) + ' / ' + total + ')';
+      if (done >= total) return total > 1 ? t('กำลังรวมไฟล์ .zip…') : t('กำลังบันทึก…');
+      return t('กำลังแปลงหน้า {page} ({i} / {total})', { page: pageNo, i: done + 1, total: total });
     }
     var frac = status === 'recognizing text' ? p : 0;
     $('pdfProgress').value = Math.round((done + frac) / total * 100);
-    if (status === 'build') return 'กำลังสร้างไฟล์ Word…';
-    if (status === 'text') return 'กำลังอ่านข้อความหน้า ' + pageNo + ' (' + (done + 1) + ' / ' + total + ')';
-    if (status === 'recognizing text') return 'หน้า ' + pageNo + ' เป็นภาพ — กำลังอ่านด้วย OCR ' + Math.round(p * 100) + '%';
-    return OCR_STATUS[status] || 'กำลังทำงาน…';
+    if (status === 'build') return t('กำลังสร้างไฟล์ Word…');
+    if (status === 'text') return t('กำลังอ่านข้อความหน้า {page} ({i} / {total})', { page: pageNo, i: done + 1, total: total });
+    if (status === 'recognizing text') return t('หน้า {page} เป็นภาพ — กำลังอ่านด้วย OCR {pct}%', { page: pageNo, pct: Math.round(p * 100) });
+    return t(OCR_STATUS[status] || 'กำลังทำงาน…');
   }
 
   function docxSummary(r) {
     var parts = [];
     var exact = r.textPages.filter(function (n) { return r.badPages.indexOf(n) < 0; });
     if (exact.length) {
-      parts.push(exact.length === r.count ? 'ข้อความตรงตามต้นฉบับในไฟล์ PDF ทุกหน้า'
-        : 'หน้า ' + pagesText(exact) + ': ข้อความตรงตามต้นฉบับในไฟล์ PDF');
+      parts.push(exact.length === r.count ? t('ข้อความตรงตามต้นฉบับในไฟล์ PDF ทุกหน้า')
+        : t('หน้า {pages}: ข้อความตรงตามต้นฉบับในไฟล์ PDF', { pages: pagesText(exact) }));
     }
     var warn = false;
     if (r.ocrPages.length) {
       warn = true;
-      parts.push('หน้า ' + pagesText(r.ocrPages) + ' เป็นภาพสแกน อ่านด้วย OCR — กรุณาตรวจทานข้อความ');
+      parts.push(t('หน้า {pages} เป็นภาพสแกน อ่านด้วย OCR — กรุณาตรวจทานข้อความ', { pages: pagesText(r.ocrPages) }));
     }
     if (r.badPages.length) {
       warn = true;
-      parts.push('หน้า ' + pagesText(r.badPages) + ' ฟอนต์ในไฟล์ไม่บอกรหัสตัวอักษรบางตัว ข้อความอาจไม่ครบ — ตรวจทาน หรือเลือก "OCR ทุกหน้า"');
+      parts.push(t('หน้า {pages} ฟอนต์ในไฟล์ไม่บอกรหัสตัวอักษรบางตัว ข้อความอาจไม่ครบ — ตรวจทาน หรือเลือก "OCR ทุกหน้า"', { pages: pagesText(r.badPages) }));
     }
     if (r.emptyPages.length) {
       warn = true;
-      parts.push('หน้า ' + pagesText(r.emptyPages) + ' ไม่มีข้อความ' +
-        (r.ocrFailed.length ? ' (อ่านด้วย OCR ไม่สำเร็จ)' : ($('pdfMode').value === 'text' ? ' (เป็นภาพ — เลือกอ่านด้วย OCR)' : '')));
+      var why = r.ocrFailed.length ? t('(อ่านด้วย OCR ไม่สำเร็จ)') : ($('pdfMode').value === 'text' ? t('(เป็นภาพ — เลือกอ่านด้วย OCR)') : '');
+      parts.push(t('หน้า {pages} ไม่มีข้อความ', { pages: pagesText(r.emptyPages) }) + (why ? ' ' + why : ''));
     }
     return { text: parts.join(' · '), warn: warn };
   }
@@ -266,7 +270,7 @@
     try {
       pages = PdfTools.parsePages($('pdfPages').value, S.doc.numPages);
     } catch (e) {
-      showResult(e.message, true);
+      showResult(I18n.msg(e), true);
       try { $('pdfPages').focus(); } catch (_) { /* ignore */ }
       return;
     }
@@ -275,7 +279,7 @@
     S.cancelled = false;
     resetResult();
     $('pdfProgress').value = 0;
-    $('pdfProgressText').textContent = 'กำลังเตรียม…';
+    $('pdfProgressText').textContent = t('กำลังเตรียม…');
     syncForm();
     var isCancelled = function () { return S.cancelled || token !== S.token; };
     var onProgress = function (done, total, pageNo, status, p) {
@@ -285,7 +289,7 @@
       var r, summary;
       if (format === 'jpg') {
         r = await PdfTools.toJpeg(doc, { preset: $('pdfQuality').value, pages: pages, onProgress: onProgress, isCancelled: isCancelled });
-        summary = { text: (r.zip ? r.count + ' รูปในไฟล์ .zip' : '1 รูป') + ' (' + r.dpi + ' dpi)', warn: false };
+        summary = { text: (r.zip ? t('{n} รูปในไฟล์ .zip', { n: r.count }) : t('1 รูป')) + ' (' + r.dpi + ' dpi)', warn: false };
       } else {
         var lang = OCR_LANGS.indexOf($('pdfLang').value) >= 0 ? $('pdfLang').value : 'tha+eng';
         r = await PdfTools.toDocx(doc, {
@@ -293,7 +297,7 @@
           onProgress: onProgress, isCancelled: isCancelled
         });
         summary = docxSummary(r);
-        summary.text = r.count + ' หน้า' + (summary.text ? ' · ' + summary.text : '');
+        summary.text = t('{n} หน้า', { n: r.count }) + (summary.text ? ' · ' + summary.text : '');
       }
       S.last = { blob: r.blob, name: r.name };
       var saved;
@@ -301,17 +305,17 @@
       var note = '';
       if (saved !== true) {
         summary.warn = true;
-        note = saved === false ? ' · ยังไม่ได้บันทึกไฟล์ (กด "' + $('pdfConvertText').textContent + '" อีกครั้งเพื่อบันทึก)'
-          : ' · บันทึกไฟล์ไม่สำเร็จ: ' + (saved && saved.message ? saved.message : saved);
+        note = ' · ' + (saved === false ? t('ยังไม่ได้บันทึกไฟล์ (กด "{button}" อีกครั้งเพื่อบันทึก)', { button: $('pdfConvertText').textContent })
+          : t('บันทึกไฟล์ไม่สำเร็จ: {msg}', { msg: I18n.msg(saved) }));
       }
-      showResult('สร้าง "' + r.name + '" สำเร็จ — ' + summary.text + ', ' + formatBytes(r.blob.size) + note, summary.warn);
+      showResult(t('สร้าง "{name}" สำเร็จ — {summary}, {size}', { name: r.name, summary: summary.text, size: formatBytes(r.blob.size) }) + note, summary.warn);
       $('pdfShare').hidden = !PdfExport.canShareFiles(r.blob.type, r.name);
     } catch (e) {
       if (e && e.cancelled || S.cancelled) {
-        showResult('หยุดการแปลงแล้ว', true);
+        showResult(t('หยุดการแปลงแล้ว'), true);
       } else {
         console.error(e);
-        showResult('แปลงไฟล์ไม่สำเร็จ: ' + (e && e.message ? e.message : e), true);
+        showResult(t('แปลงไฟล์ไม่สำเร็จ: {msg}', { msg: I18n.msg(e) }), true);
       }
     } finally {
       S.busy = false;
@@ -325,7 +329,7 @@
     if (!S.last) return;
     PdfExport.share(S.last.blob, S.last.name).catch(function (e) {
       if (e && e.name === 'AbortError') return;
-      toast('แชร์ไม่สำเร็จ: ' + (e && e.message ? e.message : e), 'error');
+      toast(t('แชร์ไม่สำเร็จ: {msg}', { msg: I18n.msg(e) }), 'error');
     });
   }
 

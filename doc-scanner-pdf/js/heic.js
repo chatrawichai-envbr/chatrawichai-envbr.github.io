@@ -31,7 +31,7 @@
   }
 
   function platform() {
-    if (!window.AppPlatform) throw new Error('ไม่พบ AppPlatform (js/boot.js)');
+    if (!window.AppPlatform) throw new Error(I18n.t('ไม่พบ AppPlatform (js/boot.js)'));
     return window.AppPlatform;
   }
 
@@ -89,12 +89,12 @@
         touch();
         if (m.error) { var err = codeError(m.error, m.code); err.fromWorker = true; job.reject(err); }
         else if (!(m.width > 0 && m.height > 0) || !(m.data instanceof ArrayBuffer) || m.data.byteLength !== m.width * m.height * 4) {
-          job.reject(codeError('ผลการถอดรหัส HEIC ไม่ถูกต้อง'));
+          job.reject(codeError(I18n.t('ผลการถอดรหัส HEIC ไม่ถูกต้อง')));
         } else job.resolve(new ImageData(new Uint8ClampedArray(m.data), m.width, m.height));
       };
       w.onerror = function (e) {
         if (e && e.preventDefault) e.preventDefault();
-        var err = codeError((e && e.message) || 'ตัวถอดรหัส HEIC ทำงานผิดพลาด');
+        var err = codeError((e && e.message) || I18n.t('ตัวถอดรหัส HEIC ทำงานผิดพลาด'));
         stopWorker();
         failAll(err);
       };
@@ -111,8 +111,8 @@
         job.timer = setTimeout(function () {
           delete jobs[id];
           stopWorker();
-          failAll(codeError('ถอดรหัส HEIC นานเกินไป'));
-          reject(codeError('ถอดรหัส HEIC นานเกินไป'));
+          failAll(codeError(I18n.t('ถอดรหัส HEIC นานเกินไป')));
+          reject(codeError(I18n.t('ถอดรหัส HEIC นานเกินไป')));
         }, TIMEOUT_MS);
         jobs[id] = job;
         clearTimeout(idleTimer);
@@ -129,7 +129,7 @@
   function decodeInline(blob, maxPixels) {
     var run = function () {
       return Promise.all([blob.arrayBuffer(), inlineLib || platform().loadScript(LIB, true).then(function () {
-        if (typeof window.libheif !== 'function') throw codeError('โหลดตัวถอดรหัส HEIC ไม่สำเร็จ');
+        if (typeof window.libheif !== 'function') throw codeError(I18n.t('โหลดตัวถอดรหัส HEIC ไม่สำเร็จ'));
         inlineLib = Promise.resolve(window.libheif());
         return inlineLib;
       })]).then(function (r) {
@@ -137,15 +137,15 @@
           if (!inlineDecoder) inlineDecoder = new lib.HeifDecoder();
           var images = inlineDecoder.decode(new Uint8Array(r[0])) || [];
           var free = function () { images.forEach(function (im) { try { im.free(); } catch (e) { /* ignore */ } }); };
-          if (!images.length) { free(); throw codeError('ไม่ใช่ไฟล์ HEIC/HEIF ที่อ่านได้', 'not-heif'); }
+          if (!images.length) { free(); throw codeError(I18n.t('ไม่ใช่ไฟล์ HEIC/HEIF ที่อ่านได้'), 'not-heif'); }
           var w = images[0].get_width(), h = images[0].get_height();
-          if (!(w > 0 && h > 0)) { free(); throw codeError('ขนาดภาพไม่ถูกต้อง'); }
-          if (w * h > maxPixels) { free(); throw codeError('ภาพใหญ่เกินไป', 'too-large'); }
+          if (!(w > 0 && h > 0)) { free(); throw codeError(I18n.t('ขนาดภาพไม่ถูกต้อง')); }
+          if (w * h > maxPixels) { free(); throw codeError(I18n.t('ภาพใหญ่เกินไป'), 'too-large'); }
           var out = new ImageData(w, h);
           return new Promise(function (resolve, reject) {
             images[0].display(out, function (d) {
               free();
-              if (d) resolve(out); else reject(codeError('ถอดรหัส HEIC ไม่สำเร็จ'));
+              if (d) resolve(out); else reject(codeError(I18n.t('ถอดรหัส HEIC ไม่สำเร็จ')));
             });
           });
         });
@@ -159,7 +159,7 @@
   function decode(blob, maxPixels) {
     var max = maxPixels > 0 ? maxPixels : 40e6;
     return isHeif(blob).then(function (ok) {
-      if (!ok) throw codeError('ไม่ใช่ไฟล์ HEIC/HEIF', 'not-heif');
+      if (!ok) throw codeError(I18n.t('ไม่ใช่ไฟล์ HEIC/HEIF'), 'not-heif');
       if (typeof Worker !== 'function' || location.protocol === 'file:') return decodeInline(blob, max).then(done('inline'));
       return decodeInWorker(blob, max).then(done('worker'), function (e) {
         if (e && e.fromWorker) throw e; // ไฟล์เสีย/ใหญ่เกิน — ถอดรหัสในหน้าเว็บก็ไม่ได้เช่นกัน

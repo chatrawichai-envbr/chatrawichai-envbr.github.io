@@ -103,7 +103,7 @@
   addPolyfills(globalThis);
 
   function platform() {
-    if (!window.AppPlatform) throw new Error('ไม่พบ AppPlatform (js/boot.js)');
+    if (!window.AppPlatform) throw new Error(I18n.t('ไม่พบ AppPlatform (js/boot.js)'));
     return window.AppPlatform;
   }
 
@@ -113,7 +113,7 @@
   }
 
   function cancelledError() {
-    var e = new Error('ยกเลิกแล้ว');
+    var e = new Error(I18n.t('ยกเลิกแล้ว'));
     e.cancelled = true;
     return e;
   }
@@ -134,7 +134,7 @@
         });
       }).catch(function (e) {
         console.warn('PDF.js', e);
-        throw new Error('โหลดตัวอ่านไฟล์ PDF ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+        throw new Error(I18n.t('โหลดตัวอ่านไฟล์ PDF ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'));
       });
       libPromise.catch(function () { libPromise = null; }); // ลองใหม่ได้ครั้งหน้า
     }
@@ -167,7 +167,7 @@
     var failed = new Promise(function (resolve, reject) {
       port.addEventListener('error', function (ev) {
         if (ev && ev.preventDefault) ev.preventDefault();
-        var err = new Error('โหลดตัวอ่านไฟล์ PDF ไม่สำเร็จ' + (ev && ev.message ? ' (' + ev.message + ')' : ''));
+        var err = new Error(I18n.t('โหลดตัวอ่านไฟล์ PDF ไม่สำเร็จ') + (ev && ev.message ? ' (' + ev.message + ')' : ''));
         err.workerFailed = true;
         reject(err);
       });
@@ -185,7 +185,7 @@
   BinaryData.prototype.fetch = function (req) {
     var dir = { standardFontDataUrl: 'standard_fonts/', wasmUrl: 'wasm/' }[req && req.kind];
     var name = String(req && req.filename || '');
-    if (!dir || !/^[A-Za-z0-9_-]+\.(pfb|ttf|wasm)$/.test(name)) return Promise.reject(new Error('ไม่รู้จักไฟล์ ' + name));
+    if (!dir || !/^[A-Za-z0-9_-]+\.(pfb|ttf|wasm)$/.test(name)) return Promise.reject(new Error(I18n.t('ไม่รู้จักไฟล์ {name}', { name: name })));
     return platform().resolve(BASE + dir + name, true)
       .then(function (url) { return fetch(url); })
       .then(function (r) {
@@ -213,12 +213,12 @@
    */
   async function open(file, opts) {
     opts = opts || {};
-    if (!isSupported()) throw new Error('แปลงไฟล์ PDF ได้เมื่อเปิดผ่านเว็บไซต์ (https) เท่านั้น — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง');
-    if (!file || typeof file.arrayBuffer !== 'function') throw new Error('ไม่พบไฟล์');
-    if (!file.size) throw new Error('ไฟล์ว่างเปล่า');
-    if (file.size > MAX_FILE_BYTES) throw new Error('ไฟล์ใหญ่เกิน ' + Math.round(MAX_FILE_BYTES / 1048576) + ' MB');
+    if (!isSupported()) throw new Error(I18n.t('แปลงไฟล์ PDF ได้เมื่อเปิดผ่านเว็บไซต์ (https) เท่านั้น — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง'));
+    if (!file || typeof file.arrayBuffer !== 'function') throw new Error(I18n.t('ไม่พบไฟล์'));
+    if (!file.size) throw new Error(I18n.t('ไฟล์ว่างเปล่า'));
+    if (file.size > MAX_FILE_BYTES) throw new Error(I18n.t('ไฟล์ใหญ่เกิน {size} MB', { size: Math.round(MAX_FILE_BYTES / 1048576) }));
     var bytes = new Uint8Array(await file.arrayBuffer());
-    if (!hasPdfHeader(bytes)) throw new Error('ไฟล์นี้ไม่ใช่ไฟล์ PDF');
+    if (!hasPdfHeader(bytes)) throw new Error(I18n.t('ไฟล์นี้ไม่ใช่ไฟล์ PDF'));
     var loaded = await loadLib();
     var lib = loaded.lib;
     var w = await startWorker(loaded);
@@ -262,13 +262,13 @@
       close();
       if (e && e.workerFailed) throw e;
       if (aborted) {
-        var err = new Error('ไฟล์นี้มีรหัสผ่าน — ต้องใส่รหัสผ่านเพื่อเปิด');
+        var err = new Error(I18n.t('ไฟล์นี้มีรหัสผ่าน — ต้องใส่รหัสผ่านเพื่อเปิด'));
         err.cancelled = true;
         throw err;
       }
       if (!e || (e.name !== 'InvalidPDFException' && e.name !== 'PasswordException')) console.warn('PDF', e);
-      if (e && e.name === 'PasswordException') throw new Error('ไฟล์นี้มีรหัสผ่าน — ต้องใส่รหัสผ่านเพื่อเปิด');
-      throw new Error('เปิดไฟล์ PDF ไม่ได้ — ไฟล์อาจเสียหาย' + (e && e.name === 'InvalidPDFException' ? '' : ' (' + (e && e.message || e) + ')'));
+      if (e && e.name === 'PasswordException') throw new Error(I18n.t('ไฟล์นี้มีรหัสผ่าน — ต้องใส่รหัสผ่านเพื่อเปิด'));
+      throw new Error(I18n.t('เปิดไฟล์ PDF ไม่ได้ — ไฟล์อาจเสียหาย') + (e && e.name === 'InvalidPDFException' ? '' : ' (' + (e && e.message || e) + ')'));
     }
     return {
       numPages: pdf.numPages,
@@ -289,19 +289,19 @@
       for (var i = 1; i <= numPages; i++) all.push(i);
       return all;
     }
-    if (s.length > 200 || !/^[0-9,\-]+$/.test(s)) throw new Error('รูปแบบเลขหน้าไม่ถูกต้อง (ตัวอย่าง: 1-3, 5)');
+    if (s.length > 200 || !/^[0-9,\-]+$/.test(s)) throw new Error(I18n.t('รูปแบบเลขหน้าไม่ถูกต้อง (ตัวอย่าง: 1-3, 5)'));
     var seen = {}, out = [];
     s.split(',').forEach(function (part) {
       if (!part) return;
       var m = /^(\d{1,6})?(-)?(\d{1,6})?$/.exec(part);
-      if (!m || (!m[1] && !m[3]) || (!m[2] && !m[1])) throw new Error('รูปแบบเลขหน้าไม่ถูกต้อง: "' + part + '"');
+      if (!m || (!m[1] && !m[3]) || (!m[2] && !m[1])) throw new Error(I18n.t('รูปแบบเลขหน้าไม่ถูกต้อง: "{part}"', { part: part }));
       var a = m[1] ? Number(m[1]) : 1;
       var b = m[2] ? (m[3] ? Number(m[3]) : numPages) : a;
-      if (a < 1 || b < 1 || a > numPages || b > numPages) throw new Error('ไฟล์นี้มี ' + numPages + ' หน้า — ไม่มีหน้า "' + part + '"');
-      if (a > b) throw new Error('ช่วงหน้าไม่ถูกต้อง: "' + part + '"');
+      if (a < 1 || b < 1 || a > numPages || b > numPages) throw new Error(I18n.t('ไฟล์นี้มี {n} หน้า — ไม่มีหน้า "{part}"', { n: numPages, part: part }));
+      if (a > b) throw new Error(I18n.t('ช่วงหน้าไม่ถูกต้อง: "{part}"', { part: part }));
       for (var p = a; p <= b; p++) if (!seen[p]) { seen[p] = true; out.push(p); }
     });
-    if (!out.length) throw new Error('ยังไม่ได้เลือกหน้า');
+    if (!out.length) throw new Error(I18n.t('ยังไม่ได้เลือกหน้า'));
     return out;
   }
 
@@ -317,7 +317,7 @@
       var vp1 = page.getViewport({ scale: 1 });
       var scale = Math.min(dpi / 72, Math.sqrt(MAX_CANVAS_PIXELS / (vp1.width * vp1.height)),
         MAX_CANVAS_SIDE / vp1.width, MAX_CANVAS_SIDE / vp1.height);
-      if (!(scale > 0) || !isFinite(scale)) throw new Error('ขนาดหน้า ' + n + ' ไม่ถูกต้อง');
+      if (!(scale > 0) || !isFinite(scale)) throw new Error(I18n.t('ขนาดหน้า {n} ไม่ถูกต้อง', { n: n }));
       var vp = page.getViewport({ scale: scale });
       canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.floor(vp.width));
@@ -343,7 +343,7 @@
 
   function canvasToJpeg(canvas, quality) {
     return new Promise(function (resolve, reject) {
-      canvas.toBlob(function (b) { if (b) resolve(b); else reject(new Error('แปลงภาพเป็น JPEG ไม่สำเร็จ')); }, 'image/jpeg', quality);
+      canvas.toBlob(function (b) { if (b) resolve(b); else reject(new Error(I18n.t('แปลงภาพเป็น JPEG ไม่สำเร็จ'))); }, 'image/jpeg', quality);
     });
   }
 
@@ -353,9 +353,9 @@
     opts = opts || {};
     var preset = PRESETS[opts.preset] || PRESETS.standard;
     var pages = Array.isArray(opts.pages) ? opts.pages : parsePages('', doc.numPages);
-    if (!pages.length) throw new Error('ยังไม่ได้เลือกหน้า');
+    if (!pages.length) throw new Error(I18n.t('ยังไม่ได้เลือกหน้า'));
     if (pages.length > MAX_JPEG_PAGES) {
-      throw new Error('แปลงเป็นรูปได้ครั้งละไม่เกิน ' + MAX_JPEG_PAGES + ' หน้า — เลือกช่วงหน้า เช่น 1-' + MAX_JPEG_PAGES);
+      throw new Error(I18n.t('แปลงเป็นรูปได้ครั้งละไม่เกิน {max} หน้า — เลือกช่วงหน้า เช่น 1-{max}', { max: MAX_JPEG_PAGES }));
     }
     var isCancelled = typeof opts.isCancelled === 'function' ? opts.isCancelled : function () { return false; };
     var progress = typeof opts.onProgress === 'function' ? opts.onProgress : function () {};
@@ -625,7 +625,7 @@
     } finally {
       releaseCanvas(canvas); // คืนหน่วยความจำก่อนเริ่มอ่าน (OCR ใช้เวลาหลายวินาที)
     }
-    if (!png) throw new Error('เตรียมภาพหน้า ' + n + ' ไม่สำเร็จ');
+    if (!png) throw new Error(I18n.t('เตรียมภาพหน้า {n} ไม่สำเร็จ', { n: n }));
     if (isCancelled()) throw cancelledError();
     var res = await window.Ocr.recognize(png, lang, onProgress, size);
     return { paras: ocrParagraphs(res.text), confidence: res.confidence };
@@ -655,12 +655,12 @@
   async function toDocx(doc, opts) {
     opts = opts || {};
     var pages = Array.isArray(opts.pages) ? opts.pages : parsePages('', doc.numPages);
-    if (!pages.length) throw new Error('ยังไม่ได้เลือกหน้า');
-    if (pages.length > MAX_DOCX_PAGES) throw new Error('แปลงเป็น Word ได้ครั้งละไม่เกิน ' + MAX_DOCX_PAGES + ' หน้า');
+    if (!pages.length) throw new Error(I18n.t('ยังไม่ได้เลือกหน้า'));
+    if (pages.length > MAX_DOCX_PAGES) throw new Error(I18n.t('แปลงเป็น Word ได้ครั้งละไม่เกิน {max} หน้า', { max: MAX_DOCX_PAGES }));
     var mode = opts.mode === 'text' || opts.mode === 'ocr' ? opts.mode : 'auto';
     var lang = OCR_LANGS.indexOf(opts.lang) >= 0 ? opts.lang : 'tha+eng';
     var canOcr = !!(window.Ocr && Ocr.isSupported());
-    if (mode === 'ocr' && !canOcr) throw new Error('อ่านข้อความจากภาพ (OCR) ได้เมื่อเปิดผ่านเว็บไซต์ (https) เท่านั้น');
+    if (mode === 'ocr' && !canOcr) throw new Error(I18n.t('อ่านข้อความจากภาพ (OCR) ได้เมื่อเปิดผ่านเว็บไซต์ (https) เท่านั้น'));
     var font = FONTS[opts.font] || FONTS.sarabun;
     var isCancelled = typeof opts.isCancelled === 'function' ? opts.isCancelled : function () { return false; };
     var progress = typeof opts.onProgress === 'function' ? opts.onProgress : function () {};

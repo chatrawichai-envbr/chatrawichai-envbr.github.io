@@ -67,14 +67,14 @@
     if (reason !== 'denied' && reason !== 'error') return '';
     var app = inAppBrowserName();
     if (app) {
-      return 'คุณเปิดหน้านี้ในแอป ' + app + ' ซึ่งมักไม่อนุญาตให้เว็บใช้กล้อง — ถ้าต้องการกล้องในแอป (ถ่ายหลายหน้าต่อเนื่อง) ' +
-        'ให้เปิดลิงก์นี้ใน Chrome หรือ Safari (เมนู ⋮ หรือ ⋯ → เปิดในเบราว์เซอร์)';
+      return I18n.t('คุณเปิดหน้านี้ในแอป {app} ซึ่งมักไม่อนุญาตให้เว็บใช้กล้อง — ถ้าต้องการกล้องในแอป (ถ่ายหลายหน้าต่อเนื่อง) ' +
+        'ให้เปิดลิงก์นี้ใน Chrome หรือ Safari (เมนู ⋮ หรือ ⋯ → เปิดในเบราว์เซอร์)', { app: app });
     }
     if (reason === 'error') return '';
     return isAppleMobile()
-      ? 'วิธีอนุญาตกล้องในแอป: แตะ "aA" ที่ช่องที่อยู่เว็บ → การตั้งค่าเว็บไซต์ → กล้อง → อนุญาต แล้วกด "ลองอีกครั้ง"'
-      : 'วิธีอนุญาตกล้องในแอป: แตะไอคอนหน้าช่องที่อยู่เว็บ → สิทธิ์ (การตั้งค่าเว็บไซต์) → กล้อง → อนุญาต แล้วกด "ลองอีกครั้ง" ' +
-        '(ถ้ายังไม่ได้ ให้อนุญาตกล้องให้แอปเบราว์เซอร์ในการตั้งค่าของเครื่องด้วย)';
+      ? I18n.t('วิธีอนุญาตกล้องในแอป: แตะ "aA" ที่ช่องที่อยู่เว็บ → การตั้งค่าเว็บไซต์ → กล้อง → อนุญาต แล้วกด "ลองอีกครั้ง"')
+      : I18n.t('วิธีอนุญาตกล้องในแอป: แตะไอคอนหน้าช่องที่อยู่เว็บ → สิทธิ์ (การตั้งค่าเว็บไซต์) → กล้อง → อนุญาต แล้วกด "ลองอีกครั้ง" ' +
+        '(ถ้ายังไม่ได้ ให้อนุญาตกล้องให้แอปเบราว์เซอร์ในการตั้งค่าของเครื่องด้วย)');
   }
 
   function create(opts) {
@@ -97,7 +97,11 @@
 
     function setMsg(text) { el.msg.textContent = text; }
 
-    function updateCount() { el.count.textContent = String(count); }
+    function updateCount() {
+      if (count && String(count) !== el.count.textContent && window.Motion) Motion.bump(el.count);
+      el.count.textContent = String(count);
+      if (el.countUnit) el.countUnit.textContent = I18n.t('หน้า', { n: count });
+    }
 
     function stopTracks(s) {
       s.getTracks().forEach(function (t) { try { t.stop(); } catch (_) { /* ignore */ } });
@@ -127,8 +131,8 @@
 
     function showBlocked(reason) {
       var t = TEXTS[reason] || TEXTS.error;
-      el.blockedTitle.textContent = t[0];
-      el.blockedText.textContent = t[1];
+      el.blockedTitle.textContent = I18n.t(t[0]);
+      el.blockedText.textContent = I18n.t(t[1]);
       var help = helpText(reason);
       el.blockedHelp.textContent = help;
       el.blockedHelp.hidden = !help;
@@ -168,7 +172,7 @@
       busy = false;
       lastQuad = null;
       updateCount();
-      setMsg('กำลังเปิดกล้อง…');
+      setMsg(I18n.t('กำลังเปิดกล้อง…'));
       el.shutter.disabled = true;
       el.torch.hidden = true;
       el.view.hidden = false;
@@ -209,7 +213,7 @@
       el.torch.hidden = !caps.torch;
 
       el.shutter.disabled = false;
-      setMsg('วางเอกสารให้อยู่ในกรอบ แล้วกดถ่าย');
+      setMsg(I18n.t('วางเอกสารให้อยู่ในกรอบ แล้วกดถ่าย'));
       detectTimer = setInterval(detectLoop, DETECT_INTERVAL);
       if (typeof opts.onOpen === 'function') opts.onOpen();
       return true;
@@ -278,7 +282,7 @@
           if (!stream || my !== session) return;
           lastQuad = q ? q.map(function (p) { return { x: p.x / s, y: p.y / s }; }) : null;
           drawQuad(lastQuad);
-          if (!busy) setMsg(lastQuad ? 'พบเอกสารแล้ว กดถ่ายได้เลย' : 'วางเอกสารให้อยู่ในกรอบ แล้วกดถ่าย');
+          if (!busy) setMsg(I18n.t(lastQuad ? 'พบเอกสารแล้ว กดถ่ายได้เลย' : 'วางเอกสารให้อยู่ในกรอบ แล้วกดถ่าย'));
         }).catch(function (e) {
           console.warn('live detect', e);
         }).then(function () { detecting = false; });
@@ -331,10 +335,10 @@
         await opts.onCapture(blob);
         count++;
         updateCount();
-        setMsg('ถ่ายแล้ว ' + count + ' หน้า — ถ่ายต่อ หรือกด "เสร็จ"');
+        setMsg(I18n.t('ถ่ายแล้ว {n} หน้า — ถ่ายต่อ หรือกด "เสร็จ"', { n: count }));
       } catch (e) {
         console.error(e);
-        setMsg('ถ่ายภาพไม่สำเร็จ ลองอีกครั้ง');
+        setMsg(I18n.t('ถ่ายภาพไม่สำเร็จ ลองอีกครั้ง'));
       } finally {
         busy = false;
         el.shutter.disabled = !stream;

@@ -12,14 +12,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
-  <meta name="app-build" content="77099bc3d166">
+  <meta name="app-build" content="2bdc6e8360e3">
 
   <!-- โหลด CSS/JS ทั้งหมดผ่าน boot.js พร้อม ?v=<เลข commit>-<วันเวลาที่เปิด> เพื่อให้ได้ไฟล์ล่าสุดเสมอ
        (ไลบรารีทั้งหมดอยู่ในเว็บไซต์นี้ใน vendor/ ไม่พึ่ง CDN ภายนอก) -->
-  <script src="js/boot.js?v=77099bc3d166"></script>
+  <script src="js/boot.js?v=2bdc6e8360e3"></script>
 </head>
 <body>
-  <noscript><p>ต้องเปิดใช้งาน JavaScript ในเบราว์เซอร์เพื่อใช้แอปนี้</p></noscript>
+  <noscript><p>ต้องเปิดใช้งาน JavaScript ในเบราว์เซอร์เพื่อใช้แอปนี้ / Please turn on JavaScript in your browser to use this app.</p></noscript>
   <svg class="sprite" aria-hidden="true" focusable="false">
     <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
     <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M10.5 18.5h3"/></symbol>
@@ -44,6 +44,7 @@
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 5h16M12 5v14M8.5 19h7"/><path d="M4 5v2.5M20 5v2.5"/></symbol>
     <symbol id="i-convert" viewBox="0 0 24 24"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></symbol>
     <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V4a1 1 0 0 1 1-1h3M17 3h3a1 1 0 0 1 1 1v3M21 17v3a1 1 0 0 1-1 1h-3M7 21H4a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/></symbol>
   </svg>
 
@@ -59,6 +60,10 @@
         <span id="cvStatusText">กำลังโหลดตัวประมวลผลภาพ…</span>
         <button id="cvRetry" class="link-btn" type="button" hidden>ลองใหม่</button>
       </div>
+      <!-- เปลี่ยนภาษา ไทย/อังกฤษ (js/i18n.js แสดงปุ่มและเขียนข้อความเป็นภาษาที่จะเปลี่ยนไป) -->
+      <button id="btnLang" class="lang-btn" type="button" data-i18n-skip hidden>
+        <svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg><span id="btnLangText"></span>
+      </button>
     </header>
 
     <main class="home-main">
@@ -125,7 +130,7 @@
       <button id="edBack" class="btn btn-ghost" type="button">
         <svg class="icon"><use href="#i-back"/></svg><span>เสร็จ</span>
       </button>
-      <h2 id="editorTitle" class="topbar-title">หน้า 1</h2>
+      <h2 id="editorTitle" class="topbar-title"></h2>
       <div class="nav-pair">
         <button id="edPrev" class="btn btn-ghost btn-icon" type="button" aria-label="หน้าก่อนหน้า">
           <svg class="icon"><use href="#i-left"/></svg>
@@ -241,7 +246,7 @@
       </button>
     </div>
     <div class="cam-bottom">
-      <div class="cam-count"><span id="camCount">0</span> หน้า</div>
+      <div class="cam-count"><span id="camCount">0</span> <span id="camCountUnit">หน้า</span></div>
       <button id="camShutter" class="shutter" type="button" aria-label="ถ่ายภาพ"></button>
       <button id="camDone" class="btn btn-primary" type="button">
         <svg class="icon"><use href="#i-check"/></svg><span>เสร็จ</span>
@@ -438,7 +443,7 @@
           </select>
         </label>
         <label class="field">
-          <span>หน้า</span>
+          <span>หน้าที่จะแปลง</span>
           <input id="pdfPages" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="ทุกหน้า หรือ เช่น 1-3, 5">
         </label>
       </div>

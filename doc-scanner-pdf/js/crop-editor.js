@@ -31,7 +31,7 @@
 
     var canvas = document.createElement('canvas');
     canvas.className = 'crop-img';
-    var svg = svgEl('svg', { 'class': 'crop-svg', role: 'group', 'aria-label': 'กรอบครอป' });
+    var svg = svgEl('svg', { 'class': 'crop-svg', role: 'group' });
     var root = svgEl('g');
     var shade = svgEl('path', { 'class': 'shade' });
     var poly = svgEl('polygon', { 'class': 'quad' });
@@ -49,8 +49,7 @@
         : svgEl('circle', { 'class': 'handle', r: 11 });
       var hit = svgEl('circle', {
         'class': 'hit', r: isEdge ? HIT_RADIUS - 6 : HIT_RADIUS, tabindex: 0,
-        'data-idx': i, role: 'button',
-        'aria-label': (isEdge ? edgeNames[i - 4] : cornerNames[i]) + ' (ลากหรือใช้ปุ่มลูกศรเพื่อเลื่อน)'
+        'data-idx': i, role: 'button'
       });
       handles.push(h);
       hits.push(hit);
@@ -278,8 +277,19 @@
     if (ro) ro.observe(stage);
     else window.addEventListener('resize', layout);
 
+    /** ชื่อของกรอบและจุดลากสำหรับโปรแกรมอ่านหน้าจอ (ตั้งทุกครั้งที่เปิด — ภาษาอาจเปลี่ยนไปแล้ว) */
+    function setLabels() {
+      svg.setAttribute('aria-label', I18n.t('กรอบครอป'));
+      hits.forEach(function (hit, i) {
+        var name = I18n.t(i >= 4 ? edgeNames[i - 4] : cornerNames[i]);
+        hit.setAttribute('aria-label', I18n.t('{name} (ลากหรือใช้ปุ่มลูกศรเพื่อเลื่อน)', { name: name }));
+      });
+    }
+    setLabels();
+
     return {
       open: function (source, q) {
+        setLabels();
         img = source;
         imgW = source.width;
         imgH = source.height;

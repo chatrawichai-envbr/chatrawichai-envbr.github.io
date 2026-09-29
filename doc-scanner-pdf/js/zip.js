@@ -36,7 +36,7 @@
     if (data instanceof Uint8Array) return Promise.resolve(data);
     if (data instanceof ArrayBuffer) return Promise.resolve(new Uint8Array(data));
     if (data && typeof data.arrayBuffer === 'function') return data.arrayBuffer().then(function (b) { return new Uint8Array(b); });
-    return Promise.reject(new Error('ข้อมูลไฟล์ใน ZIP ไม่ถูกต้อง'));
+    return Promise.reject(new Error(I18n.t('ข้อมูลไฟล์ใน ZIP ไม่ถูกต้อง')));
   }
 
   function canDeflate() { return typeof CompressionStream === 'function'; }
@@ -59,11 +59,11 @@
 
   function create(entries, opts) {
     opts = opts || {};
-    if (!Array.isArray(entries) || !entries.length) return Promise.reject(new Error('ไม่มีไฟล์ให้รวม'));
+    if (!Array.isArray(entries) || !entries.length) return Promise.reject(new Error(I18n.t('ไม่มีไฟล์ให้รวม')));
     var names = {};
     for (var i = 0; i < entries.length; i++) {
-      if (!validName(entries[i].name)) return Promise.reject(new Error('ชื่อไฟล์ใน ZIP ไม่ถูกต้อง: ' + entries[i].name));
-      if (names[entries[i].name]) return Promise.reject(new Error('ชื่อไฟล์ซ้ำใน ZIP: ' + entries[i].name));
+      if (!validName(entries[i].name)) return Promise.reject(new Error(I18n.t('ชื่อไฟล์ใน ZIP ไม่ถูกต้อง: {name}', { name: entries[i].name })));
+      if (names[entries[i].name]) return Promise.reject(new Error(I18n.t('ชื่อไฟล์ซ้ำใน ZIP: {name}', { name: entries[i].name })));
       names[entries[i].name] = true;
     }
     return entries.reduce(function (p, e) {
@@ -109,7 +109,7 @@
         offset += 30 + f.name.length + f.stored.length;
       });
       var cdSize = central.reduce(function (n, b) { return n + b.byteLength; }, 0);
-      if (offset + cdSize > MAX_TOTAL || list.length > 0xFFFF) throw new Error('ไฟล์ ZIP ใหญ่เกินไป');
+      if (offset + cdSize > MAX_TOTAL || list.length > 0xFFFF) throw new Error(I18n.t('ไฟล์ ZIP ใหญ่เกินไป'));
       var end = header(0x06054b50, 22);
       end.setUint16(8, list.length, true);
       end.setUint16(10, list.length, true);

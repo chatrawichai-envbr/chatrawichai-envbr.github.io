@@ -52,7 +52,7 @@
   function canvasToJpegBytes(canvas, quality) {
     return new Promise(function (resolve, reject) {
       canvas.toBlob(function (blob) {
-        if (!blob) { reject(new Error('แปลงภาพเป็น JPEG ไม่สำเร็จ')); return; }
+        if (!blob) { reject(new Error(I18n.t('แปลงภาพเป็น JPEG ไม่สำเร็จ'))); return; }
         blob.arrayBuffer().then(function (buf) { resolve(new Uint8Array(buf)); }, reject);
       }, 'image/jpeg', quality);
     });
@@ -98,7 +98,7 @@
       jspdfPromise.catch(function () { jspdfPromise = null; }); // ลองใหม่ได้ครั้งหน้า
     }
     return jspdfPromise.catch(function () {
-      throw new Error('โหลดไลบรารี jsPDF ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ');
+      throw new Error(I18n.t('โหลดไลบรารี jsPDF ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ'));
     });
   }
 
@@ -117,7 +117,7 @@
         return r.arrayBuffer();
       }).then(function (buf) {
         var bytes = new Uint8Array(buf);
-        if (bytes.length < 12 || bytes[0] !== 0 || bytes[1] !== 1 || bytes[2] !== 0 || bytes[3] !== 0) throw new Error('ไฟล์ฟอนต์ไม่ถูกต้อง');
+        if (bytes.length < 12 || bytes[0] !== 0 || bytes[1] !== 1 || bytes[2] !== 0 || bytes[3] !== 0) throw new Error(I18n.t('ไฟล์ฟอนต์ไม่ถูกต้อง'));
         var out = '';
         for (var i = 0; i < bytes.length; i += 0x8000) {
           out += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
@@ -127,7 +127,7 @@
       fontPromise.catch(function () { fontPromise = null; }); // ลองใหม่ได้ครั้งหน้า
     }
     return fontPromise.catch(function (e) {
-      throw new Error('โหลดฟอนต์สำหรับข้อความใน PDF ไม่สำเร็จ (' + (e && e.message ? e.message : e) + ')');
+      throw new Error(I18n.t('โหลดฟอนต์สำหรับข้อความใน PDF ไม่สำเร็จ ({msg})', { msg: I18n.msg(e) }));
     });
   }
 
@@ -166,7 +166,7 @@
   }
 
   function cancelledError() {
-    var e = new Error('ยกเลิกแล้ว');
+    var e = new Error(I18n.t('ยกเลิกแล้ว'));
     e.cancelled = true;
     return e;
   }
@@ -183,7 +183,7 @@
    *          ยกเลิก → reject ด้วย error.cancelled = true
    */
   async function build(pages, opts, renderPage, onProgress) {
-    if (!pages.length) throw new Error('ยังไม่มีหน้าเอกสาร');
+    if (!pages.length) throw new Error(I18n.t('ยังไม่มีหน้าเอกสาร'));
     await ensureJsPdf();
     var q = QUALITY[opts.quality] || QUALITY.high;
     var n = pages.length;

@@ -16,6 +16,8 @@
   var IMAGE_EXT = /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif|tiff?)$/i;
 
   var $ = function (id) { return document.getElementById(id); };
+  var t = I18n.t;      // ข้อความในภาษาที่เลือก (js/i18n.js)
+  var errText = I18n.msg;
 
   var state = {
     pages: [],
@@ -31,11 +33,14 @@
   function toast(msg, type) {
     var box = $('toasts');
     while (box.children.length >= 3) box.firstChild.remove();
-    var t = document.createElement('div');
-    t.className = 'toast' + (type ? ' ' + type : '');
-    t.textContent = msg;
-    box.appendChild(t);
-    setTimeout(function () { t.remove(); }, type === 'error' ? 5000 : 3200);
+    var el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.textContent = msg;
+    box.appendChild(el);
+    setTimeout(function () {
+      el.classList.add('toast-out'); // จางหายก่อนลบ (css/style.css)
+      setTimeout(function () { el.remove(); }, 240);
+    }, type === 'error' ? 5000 : 3200);
   }
 
   function sleep0() { return new Promise(function (r) { setTimeout(r, 0); }); }
@@ -56,10 +61,10 @@
   function isAlive(page) { return state.pages.indexOf(page) >= 0; }
 
   function debounce(fn, ms) {
-    var t = null;
+    var timer = null;
     return function () {
-      clearTimeout(t);
-      t = setTimeout(fn, ms);
+      clearTimeout(timer);
+      timer = setTimeout(fn, ms);
     };
   }
 
@@ -190,7 +195,7 @@
     try {
       var canvas = sourceCache.get(page.id);
       if (!canvas || !canvas.width) {
-        if (!page.blob) throw new Error('หน้าถูกลบแล้ว');
+        if (!page.blob) throw new Error(t('หน้าถูกลบแล้ว'));
         var pending = decoding.get(page.id);
         if (!pending) {
           pending = decodeToCanvas(page.blob);
@@ -265,8 +270,8 @@
         processPage(page);
         return true;
       } catch (e) {
-        if (e && e.code === 'too-large') toast('ข้าม "' + name + '" — ภาพมีความละเอียดสูงเกินไป', 'error');
-        else toast('เปิด "' + name + '" ไม่ได้ (ไฟล์เสียหรือรูปแบบที่เบราว์เซอร์ไม่รองรับ)', 'error');
+        if (e && e.code === 'too-large') toast(t('ข้าม "{name}" — ภาพมีความละเอียดสูงเกินไป', { name: name }), 'error');
+        else toast(t('เปิด "{name}" ไม่ได้ (ไฟล์เสียหรือรูปแบบที่เบราว์เซอร์ไม่รองรับ)', { name: name }), 'error');
         return false;
       } finally {
         await prev.catch(function () { /* ignore */ });
@@ -280,15 +285,16 @@
     for (var i = 0; i < items.length; i++) {
       var blob = items[i].blob, name = String(items[i].name || 'image');
       if (state.pages.length + reservedPages >= MAX_PAGES) {
-        toast('เพิ่มได้สูงสุด ' + MAX_PAGES + ' หน้าต่อไฟล์', 'error');
+        toast(t('เพิ่มได้สูงสุด {max} หน้าต่อไฟล์', { max: MAX_PAGES }), 'error');
         break;
       }
       if (!items[i].trusted && !isImageFile(blob)) {
-        toast('ข้าม "' + name + '" — ไม่ใช่ไฟล์รูปภาพ', 'error');
+        toast(t('ข้าม "{name}" — ไม่ใช่ไฟล์รูปภาพ', { name: name }), 'error');
         continue;
       }
       if (!blob.size || blob.size > MAX_FILE_BYTES) {
-        toast('ข้าม "' + name + '" — ' + (blob.size ? 'ไฟล์ใหญ่เกิน ' + formatBytes(MAX_FILE_BYTES) : 'ไฟล์ว่างเปล่า'), 'error');
+        toast(blob.size ? t('ข้าม "{name}" — ไฟล์ใหญ่เกิน {size}', { name: name, size: formatBytes(MAX_FILE_BYTES) })
+          : t('ข้าม "{name}" — ไฟล์ว่างเปล่า', { name: name }), 'error');
         continue;
       }
       reservedPages++;
@@ -305,12 +311,12 @@
     var pdfs = window.PdfConvert ? files.filter(PdfConvert.isPdf) : [];
     if (pdfs.length) {
       files = files.filter(function (f) { return pdfs.indexOf(f) < 0; });
-      if (pdfs.length > 1) toast('แปลงไฟล์ PDF ได้ครั้งละ 1 ไฟล์ — เปิด "' + pdfs[0].name + '"', 'error');
+      if (pdfs.length > 1) toast(t('แปลงไฟล์ PDF ได้ครั้งละ 1 ไฟล์ — เปิด "{name}"', { name: pdfs[0].name }), 'error');
       PdfConvert.open(pdfs[0]);
     }
     if (!files.length) return;
     var n = await addBlobs(files.map(function (f) { return { blob: f, name: f.name }; }));
-    if (n) toast('เพิ่ม ' + n + ' หน้าแล้ว', 'ok');
+    if (n) toast(t('เพิ่ม {n} หน้าแล้ว', { n: n }), 'ok');
   }
 
   // =====================================================================
@@ -363,7 +369,8 @@
     }, 'low').catch(function (e) {
       console.error(e);
       page.thumbPending = false;
-      renderGridItemState(page, 'ประมวลผลไม่สำเร็จ');
+      page.failed = true;
+      renderGridItemState(page);
     });
   }
 
@@ -373,20 +380,21 @@
 
   async function setThumbFromCanvas(page, canvas, raw) {
     var s = Math.min(1, THUMB_SIDE / Math.max(canvas.width, canvas.height));
-    var t = makeCanvas(canvas.width * s, canvas.height * s);
-    var ctx = t.getContext('2d');
+    var thumb = makeCanvas(canvas.width * s, canvas.height * s);
+    var ctx = thumb.getContext('2d');
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     if (raw && page.settings.rotation) {
       var r = Scanner.rotateCanvas(canvas, page.settings.rotation);
-      t = makeCanvas(r.width * s, r.height * s);
-      t.getContext('2d').drawImage(r, 0, 0, t.width, t.height);
+      releaseCanvas(thumb);
+      thumb = makeCanvas(r.width * s, r.height * s);
+      thumb.getContext('2d').drawImage(r, 0, 0, thumb.width, thumb.height);
       if (r !== canvas) releaseCanvas(r);
     } else {
-      ctx.drawImage(canvas, 0, 0, t.width, t.height);
+      ctx.drawImage(canvas, 0, 0, thumb.width, thumb.height);
     }
-    var blob = await canvasToBlob(t, 'image/jpeg', 0.85);
-    releaseCanvas(t);
+    var blob = await canvasToBlob(thumb, 'image/jpeg', 0.85);
+    releaseCanvas(thumb);
     if (!blob) return;
     if (!isAlive(page)) return;
     if (page.thumbUrl) URL.revokeObjectURL(page.thumbUrl);
@@ -422,20 +430,31 @@
   }
 
   function pageStateText(page) {
-    if (!cvReady() && CvEngine.getState() !== 'error') return 'รอตัวประมวลผลภาพ…';
-    if (page.thumbPending) return 'กำลังประมวลผล…';
+    if (!cvReady() && CvEngine.getState() !== 'error') return t('รอตัวประมวลผลภาพ…');
+    if (page.thumbPending) return t('กำลังประมวลผล…');
+    if (page.failed) return t('ประมวลผลไม่สำเร็จ');
     return '';
   }
 
-  function renderGridItemState(page, override) {
+  function renderGridItemState(page) {
     var item = document.querySelector('.page-item[data-id="' + page.id + '"] .page-state');
     if (!item) return;
-    var text = override || pageStateText(page);
+    var text = pageStateText(page);
     item.textContent = text;
     item.hidden = !text;
   }
 
+  var shownCount = 0;
+
+  /** รายการหน้า — หน้าที่เพิ่ม/ลบ/ย้ายเคลื่อนไหวไปที่ใหม่ (js/motion.js; DOM เปลี่ยนทันที) */
   function renderGrid() {
+    Motion.flip($('pageGrid'), '.page-item', buildGrid);
+    var n = state.pages.length;
+    if (n !== shownCount && n && shownCount) Motion.bump($('pageCount'));
+    shownCount = n;
+  }
+
+  function buildGrid() {
     var grid = $('pageGrid');
     grid.textContent = '';
     var n = state.pages.length;
@@ -448,7 +467,7 @@
       card.type = 'button';
       card.className = 'page-card';
       card.dataset.action = 'open';
-      card.setAttribute('aria-label', 'แก้ไขหน้า ' + (i + 1));
+      card.setAttribute('aria-label', t('แก้ไขหน้า {n}', { n: i + 1 }));
       var img = document.createElement('img');
       img.alt = '';
       img.decoding = 'async';
@@ -467,9 +486,9 @@
 
       var actions = document.createElement('div');
       actions.className = 'page-actions';
-      actions.appendChild(iconButton('i-left', 'เลื่อนหน้า ' + (i + 1) + ' ไปก่อนหน้า', 'left', i === 0));
-      actions.appendChild(iconButton('i-trash', 'ลบหน้า ' + (i + 1), 'delete'));
-      actions.appendChild(iconButton('i-right', 'เลื่อนหน้า ' + (i + 1) + ' ไปถัดไป', 'right', i === n - 1));
+      actions.appendChild(iconButton('i-left', t('เลื่อนหน้า {n} ไปก่อนหน้า', { n: i + 1 }), 'left', i === 0));
+      actions.appendChild(iconButton('i-trash', t('ลบหน้า {n}', { n: i + 1 }), 'delete'));
+      actions.appendChild(iconButton('i-right', t('เลื่อนหน้า {n} ไปถัดไป', { n: i + 1 }), 'right', i === n - 1));
 
       li.appendChild(card);
       li.appendChild(actions);
@@ -480,7 +499,7 @@
     $('pagesSection').hidden = n === 0;
     $('homeBar').hidden = n === 0;
     $('emptyState').hidden = n > 0;
-    $('btnExportCount').textContent = ' (' + n + ' หน้า)';
+    $('btnExportCount').textContent = ' ' + t('({n} หน้า)', { n: n });
   }
 
   function movePage(page, delta) {
@@ -493,7 +512,8 @@
     if (btn && !btn.disabled) btn.focus();
   }
 
-  function deletePage(page) {
+  /** ลบหน้า (render = false: ผู้เรียกแสดงรายการใหม่เองครั้งเดียว เช่น ลบทั้งหมด) */
+  function deletePage(page, render) {
     var i = state.pages.indexOf(page);
     if (i < 0) return;
     state.pages.splice(i, 1);
@@ -502,13 +522,13 @@
     page.blob = null;
     dropSource(page.id);
     if (editorCache.pageId === page.id) clearEditorCache();
-    renderGrid();
+    if (render !== false) renderGrid();
   }
 
   function clearAll() {
     addGeneration++;
     ocrCache.clear();
-    state.pages.slice().forEach(deletePage);
+    state.pages.slice().forEach(function (p) { deletePage(p, false); });
     state.current = -1;
     sourceCache.forEach(function (c) { releaseCanvas(c); });
     sourceCache.clear();
@@ -576,6 +596,7 @@
 
   var editorCache = { pageId: null, key: '', canvas: null };
   var previewToken = 0;
+  var previewShown = null; // หน้าที่ภาพตัวอย่างแสดงอยู่
 
   function currentPage() { return state.pages[state.current] || null; }
 
@@ -599,6 +620,7 @@
 
   function leaveEditor() {
     clearEditorCache();
+    previewShown = null;
     showView('home');
     renderGrid();
     var p = currentPage();
@@ -612,7 +634,7 @@
     var page = currentPage();
     if (!page) { leaveEditor(); return; }
     var n = state.pages.length;
-    $('editorTitle').textContent = 'หน้า ' + (state.current + 1) + ' / ' + n;
+    $('editorTitle').textContent = t('หน้า {n} / {total}', { n: state.current + 1, total: n });
     $('edPrev').disabled = state.current <= 0;
     $('edNext').disabled = state.current >= n - 1;
     syncControls(page.settings);
@@ -629,8 +651,8 @@
     $('edShadow').checked = isBw ? true : !!st.removeShadow;
     $('edShadow').disabled = isBw;
     $('edShadowNote').textContent = isBw
-      ? 'โหมดขาวดำลบเงาให้อัตโนมัติเสมอ'
-      : 'ปรับพื้นกระดาษให้สว่างเรียบ ลบเงามือ/เงาโทรศัพท์';
+      ? t('โหมดขาวดำลบเงาให้อัตโนมัติเสมอ')
+      : t('ปรับพื้นกระดาษให้สว่างเรียบ ลบเงามือ/เงาโทรศัพท์');
     $('edBrightness').value = st.brightness;
     $('edBrightnessVal').textContent = String(st.brightness);
     $('edContrast').value = st.contrast;
@@ -680,6 +702,10 @@
         view.width = out.width;
         view.height = out.height;
         view.getContext('2d').drawImage(out, 0, 0);
+        if (previewShown !== page.id) { // หน้าใหม่ (เปิด/เลื่อนหน้า): ค่อย ๆ ปรากฏ — ปรับแถบเลื่อนไม่กะพริบ
+          previewShown = page.id;
+          Motion.play(view, [{ opacity: 0.25, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 260 });
+        }
         await setThumbFromCanvas(page, out, false);
         if (cvReady()) {
           page.processed = true;
@@ -691,7 +717,7 @@
       }
     }, 'high').catch(function (e) {
       console.error(e);
-      toast('ประมวลผลภาพไม่สำเร็จ: ' + (e && e.message ? e.message : e), 'error');
+      toast(t('ประมวลผลภาพไม่สำเร็จ: {msg}', { msg: errText(e) }), 'error');
     }).then(function () {
       if (token === previewToken) $('edBusy').hidden = true;
     });
@@ -786,13 +812,13 @@
         scheduleThumb(p, false);
         count++;
       });
-      toast(count ? 'ใช้การตั้งค่านี้กับอีก ' + count + ' หน้าแล้ว' : 'มีเพียงหน้าเดียว', 'ok');
+      toast(count ? t('ใช้การตั้งค่านี้กับอีก {n} หน้าแล้ว', { n: count }) : t('มีเพียงหน้าเดียว'), 'ok');
     });
 
     $('edDelete').addEventListener('click', function () {
       var page = currentPage();
       if (!page) return;
-      if (!window.confirm('ลบหน้า ' + (state.current + 1) + ' ใช่หรือไม่?')) return;
+      if (!window.confirm(t('ลบหน้า {n} ใช่หรือไม่?', { n: state.current + 1 }))) return;
       deletePage(page);
       if (!state.pages.length) { state.current = -1; goBack('editor'); return; }
       state.current = Math.min(state.current, state.pages.length - 1);
@@ -825,7 +851,7 @@
       cropEditor.open(src, page.quad);
     }).catch(function (e) {
       console.error(e);
-      toast('เปิดภาพไม่สำเร็จ', 'error');
+      toast(t('เปิดภาพไม่สำเร็จ'), 'error');
       goBack('crop');
     });
   }
@@ -843,8 +869,8 @@
         var hint = $('cropHint');
         hint.classList.toggle('error', !valid);
         hint.textContent = valid
-          ? 'ลากจุดที่มุมหรือขอบเพื่อครอปอย่างอิสระ'
-          : 'กรอบไม่ถูกต้อง (มุมไขว้กันหรือเล็กเกินไป) กรุณาปรับจุดมุม';
+          ? t('ลากจุดที่มุมหรือขอบเพื่อครอปอย่างอิสระ')
+          : t('กรอบไม่ถูกต้อง (มุมไขว้กันหรือเล็กเกินไป) กรุณาปรับจุดมุม');
       }
     });
 
@@ -875,11 +901,11 @@
       var session = cropSession;
       CvEngine.detect(session.src, 'high').then(function (q) {
         if (cropSession !== session) return;
-        if (q) { cropEditor.setQuad(q); toast('ตรวจพบขอบกระดาษแล้ว', 'ok'); }
-        else toast('ไม่พบขอบกระดาษ กรุณาลากจุดมุมเอง', 'error');
+        if (q) { cropEditor.setQuad(q); toast(t('ตรวจพบขอบกระดาษแล้ว'), 'ok'); }
+        else toast(t('ไม่พบขอบกระดาษ กรุณาลากจุดมุมเอง'), 'error');
       }).catch(function (e) {
         console.error(e);
-        toast('ตรวจจับขอบไม่สำเร็จ', 'error');
+        toast(t('ตรวจจับขอบไม่สำเร็จ'), 'error');
       }).then(function () { btn.disabled = !cvReady(); });
     });
   }
@@ -909,9 +935,9 @@
 
   function cameraBlockedRemembered() {
     try {
-      var t = Number(localStorage.getItem(CAMERA_BLOCKED_KEY));
-      var age = Date.now() - t;
-      return t > 0 && age >= 0 && age < CAMERA_BLOCKED_MS;
+      var at = Number(localStorage.getItem(CAMERA_BLOCKED_KEY));
+      var age = Date.now() - at;
+      return at > 0 && age >= 0 && age < CAMERA_BLOCKED_MS;
     } catch (_) {
       return false;
     }
@@ -947,7 +973,7 @@
       elements: {
         view: $('viewCamera'), video: $('camVideo'), overlay: $('camOverlay'),
         close: $('camClose'), torch: $('camTorch'), shutter: $('camShutter'),
-        done: $('camDone'), count: $('camCount'), msg: $('camMsg'), flash: $('camFlash'),
+        done: $('camDone'), count: $('camCount'), countUnit: $('camCountUnit'), msg: $('camMsg'), flash: $('camFlash'),
         blocked: $('camBlocked'), blockedTitle: $('camBlockedTitle'), blockedText: $('camBlockedText'),
         blockedHelp: $('camBlockedHelp'), useNative: $('camUseNative'), retry: $('camRetry')
       },
@@ -955,7 +981,7 @@
       detect: function (canvas) { return CvEngine.detect(canvas, 'high'); },
       onCapture: function (blob) {
         var n = state.pages.length + 1;
-        return addBlobs([{ blob: blob, name: 'กล้อง-หน้า-' + n + '.jpg', trusted: true }]);
+        return addBlobs([{ blob: blob, name: t('กล้อง-หน้า-{n}.jpg', { n: n }), trusted: true }]);
       },
       requestClose: function () { goBack('camera'); },
       onOpen: function () {
@@ -969,7 +995,7 @@
         goBack('camera');
       },
       onClose: function (count) {
-        if (count) toast('เพิ่มจากกล้อง ' + count + ' หน้า', 'ok');
+        if (count) toast(t('เพิ่มจากกล้อง {n} หน้า', { n: count }), 'ok');
         var btn = $('btnCamera');
         if (btn) btn.focus();
       },
@@ -1043,7 +1069,7 @@
       .forEach(function (id) { $(id).disabled = busy; });
     $('exOcr').disabled = busy || !Ocr.isSupported();
     // ระหว่างสร้าง ปุ่ม "ปิด" เปลี่ยนเป็น "หยุด" (OCR หลายหน้าใช้เวลานาน)
-    $('exCancel').textContent = busy ? 'หยุด' : 'ปิด';
+    $('exCancel').textContent = busy ? t('หยุด') : t('ปิด');
     $('exCancel').disabled = false;
     $('exProgressWrap').hidden = !busy;
   }
@@ -1052,7 +1078,7 @@
     if (!exporting || exportCancelled) return;
     exportCancelled = true;
     $('exCancel').disabled = true;
-    $('exProgressText').textContent = 'กำลังหยุด…';
+    $('exProgressText').textContent = t('กำลังหยุด…');
     Ocr.cancelAll();
   }
 
@@ -1064,7 +1090,7 @@
   }
 
   function openExportDialog() {
-    if (!state.pages.length) { toast('ยังไม่มีหน้าเอกสาร', 'error'); return; }
+    if (!state.pages.length) { toast(t('ยังไม่มีหน้าเอกสาร'), 'error'); return; }
     var dlg = $('exportDialog');
     PdfExport.preload(); // โหลด jsPDF ระหว่างผู้ใช้เลือกตัวเลือก
     if (!$('exFilename').value) $('exFilename').value = PdfExport.defaultName();
@@ -1101,9 +1127,9 @@
 
   async function doExport() {
     if (exporting) return;
-    if (!state.pages.length) { showExportResult('ยังไม่มีหน้าเอกสาร', true); return; }
+    if (!state.pages.length) { showExportResult(t('ยังไม่มีหน้าเอกสาร'), true); return; }
     if (!cvReady() && CvEngine.getState() === 'loading') {
-      showExportResult('กรุณารอให้โหลดตัวประมวลผลภาพเสร็จก่อน (ดูสถานะที่มุมขวาบน)', true);
+      showExportResult(t('กรุณารอให้โหลดตัวประมวลผลภาพเสร็จก่อน (ดูสถานะที่มุมขวาบน)'), true);
       return;
     }
     var filename = PdfExport.sanitizeFilename($('exFilename').value);
@@ -1113,7 +1139,7 @@
     setExportBusy(true);
     $('exResult').hidden = true;
     $('exShare').hidden = true;
-    $('exProgressText').textContent = 'กำลังเตรียม…';
+    $('exProgressText').textContent = t('กำลังเตรียม…');
     $('exProgress').value = 0;
     try {
       var opts = exportOptions();
@@ -1124,8 +1150,8 @@
         opts.textLayer = function (page, i) {
           return ocrResultFor(page, opts.ocrLang, function (status, p) {
             if (exportCancelled) return;
-            var msg = OCR_STATUS[status] || 'กำลังทำงาน…';
-            if (status === 'recognizing text') msg = 'กำลังอ่านข้อความหน้า ' + (i + 1) + ' / ' + n + ' — ' + Math.round(p * 100) + '%';
+            var msg = t(OCR_STATUS[status] || 'กำลังทำงาน…');
+            if (status === 'recognizing text') msg = t('กำลังอ่านข้อความหน้า {n} / {total} — {pct}%', { n: i + 1, total: n, pct: Math.round(p * 100) });
             $('exProgress').value = Math.round((i + (status === 'recognizing text' ? p : 0)) / n * 100);
             $('exProgressText').textContent = msg;
           }, opts.isCancelled).then(function (res) { return res.layout; });
@@ -1133,7 +1159,7 @@
       }
       var out = await PdfExport.build(pages, opts, renderPageForPdf, function (done, total) {
         $('exProgress').value = Math.round(done / total * 100);
-        $('exProgressText').textContent = 'กำลังสร้างหน้า ' + done + ' / ' + total;
+        $('exProgressText').textContent = t('กำลังสร้างหน้า {n} / {total}', { n: done, total: total });
       });
       var blob = out.blob;
       lastPdf = { blob: blob, name: filename };
@@ -1144,33 +1170,35 @@
         console.error(e);
         saved = e;
       }
-      var note = cvReady() ? '' : ' (ไม่ได้ครอป/ปรับภาพ เพราะโหลดตัวประมวลผลภาพไม่สำเร็จ)';
+      var note = cvReady() ? '' : ' ' + t('(ไม่ได้ครอป/ปรับภาพ เพราะโหลดตัวประมวลผลภาพไม่สำเร็จ)');
       var warn = false;
       if (saved !== true) {
         warn = true;
-        note += saved === false
-          ? ' · ยังไม่ได้บันทึกไฟล์ (กด "ดาวน์โหลด PDF" อีกครั้งเพื่อบันทึก)'
-          : ' · บันทึกไฟล์ไม่สำเร็จ: ' + (saved && saved.message ? saved.message : saved);
+        note += ' · ' + (saved === false
+          ? t('ยังไม่ได้บันทึกไฟล์ (กด "{button}" อีกครั้งเพื่อบันทึก)', { button: t('ดาวน์โหลด PDF') })
+          : t('บันทึกไฟล์ไม่สำเร็จ: {msg}', { msg: errText(saved) }));
       }
       if (opts.ocr) {
         if (out.textError) {
           console.warn(out.textError);
           warn = true;
-          note += out.textPages
-            ? ' · ค้นหาข้อความได้ ' + out.textPages + ' จาก ' + n + ' หน้า (อ่านข้อความบางหน้าไม่สำเร็จ)'
-            : ' · อ่านข้อความไม่สำเร็จ ไฟล์นี้จึงค้นหาข้อความไม่ได้: ' + (out.textError.message || out.textError);
+          note += ' · ' + (out.textPages
+            ? t('ค้นหาข้อความได้ {n} จาก {total} หน้า (อ่านข้อความบางหน้าไม่สำเร็จ)', { n: out.textPages, total: n })
+            : t('อ่านข้อความไม่สำเร็จ ไฟล์นี้จึงค้นหาข้อความไม่ได้: {msg}', { msg: errText(out.textError) }));
         } else {
-          note += out.textPages ? ' · ค้นหาข้อความได้' : ' · ไม่พบข้อความในภาพ';
+          note += ' · ' + (out.textPages ? t('ค้นหาข้อความได้') : t('ไม่พบข้อความในภาพ'));
         }
       }
-      showExportResult('สร้าง "' + filename + '" สำเร็จ — ' + n + ' หน้า, ' + formatBytes(blob.size) + note, warn);
+      showExportResult(t('สร้าง "{name}" สำเร็จ — {summary}, {size}', {
+        name: filename, summary: t('{n} หน้า', { n: n }), size: formatBytes(blob.size)
+      }) + note, warn);
       $('exShare').hidden = !PdfExport.canShareFiles();
     } catch (e) {
       if (e && e.cancelled) {
-        showExportResult('หยุดการสร้าง PDF แล้ว', true);
+        showExportResult(t('หยุดการสร้าง PDF แล้ว'), true);
       } else {
         console.error(e);
-        showExportResult('สร้าง PDF ไม่สำเร็จ: ' + (e && e.message ? e.message : e), true);
+        showExportResult(t('สร้าง PDF ไม่สำเร็จ: {msg}', { msg: errText(e) }), true);
       }
     } finally {
       setExportBusy(false);
@@ -1183,7 +1211,7 @@
     $('exOcr').disabled = exporting || !supported;
     if (!supported) {
       $('exOcr').checked = false;
-      $('exOcrNote').textContent = 'ต้องเปิดผ่านเว็บไซต์ (https) — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง';
+      $('exOcrNote').textContent = t('ต้องเปิดผ่านเว็บไซต์ (https) — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง');
     }
     $('exOcrLangField').hidden = !$('exOcr').checked;
   }
@@ -1220,7 +1248,7 @@
       if (!lastPdf) return;
       PdfExport.share(lastPdf.blob, lastPdf.name).catch(function (e) {
         if (e && e.name === 'AbortError') return;
-        toast('แชร์ไม่สำเร็จ: ' + (e && e.message ? e.message : e), 'error');
+        toast(t('แชร์ไม่สำเร็จ: {msg}', { msg: errText(e) }), 'error');
       });
     });
   }
@@ -1238,7 +1266,7 @@
     'initializing tesseract': 'กำลังเตรียมตัวอ่านข้อความ…',
     'loading language traineddata': 'กำลังโหลดข้อมูลภาษา…',
     'initializing api': 'กำลังเตรียมตัวอ่านข้อความ…',
-    'recognizing text': 'กำลังอ่านข้อความ'
+    'recognizing text': 'กำลังทำงาน…'  // ข้อความจริง (มีเปอร์เซ็นต์) สร้างตอนแสดง
   };
 
   function ocrKey(page, lang) {
@@ -1261,7 +1289,7 @@
         var size = { width: canvas.width, height: canvas.height };
         var blob = await canvasToBlob(canvas, 'image/png');
         releaseCanvas(canvas);
-        if (!blob) throw new Error('เตรียมภาพไม่สำเร็จ');
+        if (!blob) throw new Error(t('เตรียมภาพไม่สำเร็จ'));
         return { blob: blob, size: size };
       } finally {
         releaseSource(page);
@@ -1280,7 +1308,7 @@
     if (res) return res;
     var img = await ocrImageFor(page);
     if (isCancelled && isCancelled()) {
-      var err = new Error('ยกเลิกแล้ว');
+      var err = new Error(t('ยกเลิกแล้ว'));
       err.cancelled = true;
       throw err;
     }
@@ -1302,9 +1330,9 @@
   }
 
   function openOcr(pages, scopeText) {
-    if (!pages.length) { toast('ยังไม่มีหน้าเอกสาร', 'error'); return; }
+    if (!pages.length) { toast(t('ยังไม่มีหน้าเอกสาร'), 'error'); return; }
     if (!Ocr.isSupported()) {
-      toast('การแปลงเป็นข้อความต้องเปิดผ่านเว็บไซต์ (https) — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง', 'error');
+      toast(t('การแปลงเป็นข้อความต้องเปิดผ่านเว็บไซต์ (https) — ไม่รองรับการเปิดไฟล์จากเครื่องโดยตรง'), 'error');
       return;
     }
     ocrPages = pages.slice();
@@ -1326,11 +1354,12 @@
     var n = pages.length;
     var parts = [];
     var confs = [];
+    var found = false;
     setOcrBusy(true);
-    setOcrNote('ตรวจทานข้อความก่อนนำไปใช้ — แก้ไขในช่องนี้ได้โดยตรง', false);
+    setOcrNote(t('ตรวจทานข้อความก่อนนำไปใช้ — แก้ไขในช่องนี้ได้โดยตรง'), false);
     $('ocrText').value = '';
     $('ocrProgress').value = 0;
-    $('ocrProgressText').textContent = 'กำลังเตรียม…';
+    $('ocrProgressText').textContent = t('กำลังเตรียม…');
     function progress(i, frac, text) {
       if (run !== ocrRun) return;
       $('ocrProgress').value = Math.round((i + frac) / n * 100);
@@ -1341,29 +1370,35 @@
         var page = pages[i];
         if (!isAlive(page)) continue;
         var num = state.pages.indexOf(page) + 1;
-        var label = n > 1 ? ' หน้า ' + num + ' (' + (i + 1) + '/' + n + ')' : '';
-        if (!ocrCache.has(ocrKey(page, lang))) progress(i, 0, 'กำลังเตรียมภาพ' + label + '…');
-        var res = await ocrResultFor(page, lang, (function (idx, lbl) {
+        var where = { n: num, i: i + 1, total: n };
+        if (!ocrCache.has(ocrKey(page, lang))) {
+          progress(i, 0, n > 1 ? t('กำลังเตรียมภาพ หน้า {n} ({i}/{total})…', where) : t('กำลังเตรียมภาพ…'));
+        }
+        var res = await ocrResultFor(page, lang, (function (idx, w) {
           return function (status, p) {
-            var msg = OCR_STATUS[status] || 'กำลังทำงาน…';
-            if (status === 'recognizing text') msg += lbl + ' ' + Math.round(p * 100) + '%';
+            var msg = t(OCR_STATUS[status] || 'กำลังทำงาน…');
+            if (status === 'recognizing text') {
+              var pct = Math.round(p * 100);
+              msg = n > 1 ? t('กำลังอ่านข้อความ หน้า {n} ({i}/{total}) {pct}%', Object.assign({ pct: pct }, w))
+                : t('กำลังอ่านข้อความ {pct}%', { pct: pct });
+            }
             progress(idx, status === 'recognizing text' ? p : 0, msg);
           };
-        })(i, label), function () { return run !== ocrRun; });
+        })(i, where), function () { return run !== ocrRun; });
         if (run !== ocrRun) return;
         confs.push(res.confidence);
-        parts.push(n > 1 ? '— หน้า ' + num + ' —\n' + res.text : res.text);
+        if (String(res.text || '').trim()) found = true;
+        parts.push(n > 1 ? t('— หน้า {n} —', { n: num }) + '\n' + res.text : res.text);
         $('ocrText').value = parts.join('\n\n');
       }
       var avg = confs.length ? Math.round(confs.reduce(function (a, b) { return a + b; }, 0) / confs.length) : 0;
-      var empty = !$('ocrText').value.replace(/— หน้า \d+ —/g, '').trim();
-      if (empty) setOcrNote('ไม่พบข้อความในภาพ — ลองครอปให้ชิดเอกสาร หรือถ่ายภาพให้ชัดขึ้น', true);
-      else if (avg < 70) setOcrNote('ความมั่นใจเฉลี่ย ' + avg + '% (ต่ำ) — ภาพอาจไม่ชัด กรุณาตรวจทานข้อความให้ละเอียด', true);
-      else setOcrNote('ความมั่นใจเฉลี่ย ' + avg + '% — ตรวจทานข้อความก่อนนำไปใช้ แก้ไขในช่องนี้ได้โดยตรง', false);
+      if (!found) setOcrNote(t('ไม่พบข้อความในภาพ — ลองครอปให้ชิดเอกสาร หรือถ่ายภาพให้ชัดขึ้น'), true);
+      else if (avg < 70) setOcrNote(t('ความมั่นใจเฉลี่ย {avg}% (ต่ำ) — ภาพอาจไม่ชัด กรุณาตรวจทานข้อความให้ละเอียด', { avg: avg }), true);
+      else setOcrNote(t('ความมั่นใจเฉลี่ย {avg}% — ตรวจทานข้อความก่อนนำไปใช้ แก้ไขในช่องนี้ได้โดยตรง', { avg: avg }), false);
     } catch (e) {
       if (run !== ocrRun || (e && e.cancelled)) return;
       console.error(e);
-      setOcrNote('แปลงเป็นข้อความไม่สำเร็จ: ' + (e && e.message ? e.message : e), true);
+      setOcrNote(t('แปลงเป็นข้อความไม่สำเร็จ: {msg}', { msg: errText(e) }), true);
     } finally {
       if (run === ocrRun) setOcrBusy(false);
     }
@@ -1394,7 +1429,7 @@
       ta.select();
       try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
     }
-    setOcrNote(ok ? 'คัดลอกข้อความแล้ว' : 'คัดลอกไม่สำเร็จ — กดค้างที่ข้อความเพื่อคัดลอกเอง', !ok);
+    setOcrNote(ok ? t('คัดลอกข้อความแล้ว') : t('คัดลอกไม่สำเร็จ — กดค้างที่ข้อความเพื่อคัดลอกเอง'), !ok);
   }
 
   function saveOcr() {
@@ -1403,9 +1438,9 @@
     var name = ocrFilename();
     // ใส่ BOM เพื่อให้โปรแกรมอย่าง Notepad รุ่นเก่าแสดงภาษาไทยถูกต้อง
     PdfExport.download(new Blob(['﻿' + text], { type: 'text/plain;charset=utf-8' }), name).then(function (ok) {
-      setOcrNote(ok ? 'บันทึก "' + name + '" แล้ว' : 'ยังไม่ได้บันทึกไฟล์', !ok);
+      setOcrNote(ok ? t('บันทึก "{name}" แล้ว', { name: name }) : t('ยังไม่ได้บันทึกไฟล์'), !ok);
     }, function (e) {
-      setOcrNote('บันทึกไม่สำเร็จ: ' + (e && e.message ? e.message : e), true);
+      setOcrNote(t('บันทึกไม่สำเร็จ: {msg}', { msg: errText(e) }), true);
     });
   }
 
@@ -1417,10 +1452,10 @@
 
     $('edOcr').addEventListener('click', function () {
       var page = currentPage();
-      if (page) openOcr([page], 'หน้า ' + (state.current + 1));
+      if (page) openOcr([page], t('หน้า {n}', { n: state.current + 1 }));
     });
     $('btnOcrAll').addEventListener('click', function () {
-      openOcr(state.pages, 'ทุกหน้า (' + state.pages.length + ' หน้า)');
+      openOcr(state.pages, t('ทุกหน้า ({n} หน้า)', { n: state.pages.length }));
     });
     $('ocrLang').addEventListener('change', function () {
       $('exOcrLang').value = $('ocrLang').value;
@@ -1435,7 +1470,7 @@
       var text = $('ocrText').value;
       if (!text) return;
       PdfExport.shareText(text, ocrFilename()).catch(function (e) {
-        if (!e || e.name !== 'AbortError') setOcrNote('แชร์ไม่สำเร็จ', true);
+        if (!e || e.name !== 'AbortError') setOcrNote(t('แชร์ไม่สำเร็จ'), true);
       });
     });
   }
@@ -1444,19 +1479,35 @@
   //  สถานะ OpenCV
   // =====================================================================
 
-  function onCvState(s, detail) {
+  var cvShown = { s: 'loading', detail: null };
+
+  /** ป้ายสถานะตัวประมวลผลภาพ (แสดงใหม่ได้เมื่อเปลี่ยนภาษา) */
+  function renderCvStatus() {
+    var s = cvShown.s, detail = cvShown.detail;
     var pill = $('cvStatus');
     pill.dataset.state = s === 'ready' ? 'ready' : s === 'error' ? 'error' : 'loading';
     $('cvRetry').hidden = s !== 'error';
     $('cvStatusText').textContent = s === 'ready'
-      ? 'พร้อมใช้งาน'
+      ? t('พร้อมใช้งาน')
       : s === 'error'
-        ? (detail || 'โหลดตัวประมวลผลภาพไม่สำเร็จ')
-        : 'กำลังโหลดตัวประมวลผลภาพ…';
+        ? errText(detail || 'โหลดตัวประมวลผลภาพไม่สำเร็จ')
+        : t('กำลังโหลดตัวประมวลผลภาพ…');
     if (s === 'ready' && detail) {
-      pill.title = 'OpenCV.js ' + (detail.build === 'simd' ? 'SIMD' : 'มาตรฐาน') +
-        (detail.mode === 'worker' ? ' · Web Worker สูงสุด ' + detail.workers + ' ตัว' : ' · ประมวลผลในหน้าเว็บ') +
-        ' · โหลด ' + (detail.ms / 1000).toFixed(1) + ' วินาที';
+      pill.title = t('OpenCV.js {build} · {mode} · โหลด {sec} วินาที', {
+        build: detail.build === 'simd' ? 'SIMD' : t('มาตรฐาน'),
+        mode: detail.mode === 'worker' ? t('Web Worker สูงสุด {n} ตัว', { n: detail.workers }) : t('ประมวลผลในหน้าเว็บ'),
+        sec: (detail.ms / 1000).toFixed(1)
+      });
+    }
+  }
+
+  function onCvState(s, detail) {
+    var was = cvShown.s;
+    cvShown = { s: s, detail: detail };
+    renderCvStatus();
+    if (s === 'ready' && was !== 'ready') { // จุดสถานะเด้งครั้งเดียวเมื่อพร้อม (ไม่เด้งซ้ำทุกครั้งที่กลับมาหน้าแรก)
+      Motion.play(document.querySelector('#cvStatus .dot'), [{ transform: 'scale(.3)' }, { transform: 'scale(1.6)', offset: 0.6 }, { transform: 'none' }],
+        { duration: 500, easing: 'ease-out' });
     }
     if (s === 'ready') {
       state.pages.forEach(function (p) { scheduleThumb(p, p.needsDetect); });
@@ -1483,7 +1534,7 @@
 
     $('btnClearAll').addEventListener('click', function () {
       if (!state.pages.length) return;
-      if (window.confirm('ลบทุกหน้า (' + state.pages.length + ' หน้า) ใช่หรือไม่?')) clearAll();
+      if (window.confirm(t('ลบทุกหน้า ({n} หน้า) ใช่หรือไม่?', { n: state.pages.length }))) clearAll();
     });
 
     $('pageGrid').addEventListener('click', function (e) {
@@ -1498,7 +1549,7 @@
       else if (action === 'left') movePage(page, -1);
       else if (action === 'right') movePage(page, 1);
       else if (action === 'delete') {
-        if (window.confirm('ลบหน้า ' + (state.pages.indexOf(page) + 1) + ' ใช่หรือไม่?')) deletePage(page);
+        if (window.confirm(t('ลบหน้า {n} ใช่หรือไม่?', { n: state.pages.indexOf(page) + 1 }))) deletePage(page);
       }
     });
   }
@@ -1533,8 +1584,8 @@
     });
     window.addEventListener('paste', function (e) {
       if (state.view !== 'home' || !e.clipboardData) return;
-      var t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      var target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
       var files = Array.prototype.filter.call(e.clipboardData.files || [], isImageFile);
       if (files.length) { e.preventDefault(); addFiles(files); }
     });
@@ -1555,20 +1606,31 @@
     var suffix = P && P.label ? ' (' + P.label + ')' : '';
     var label = P && typeof P.versionLabel === 'string' ? P.versionLabel.trim().slice(0, 40) : '';
     if (label) {
-      $('appVersion').textContent = 'เวอร์ชัน ' + label + suffix;
+      $('appVersion').textContent = t('เวอร์ชัน {v}', { v: label + suffix });
     } else {
       var o = String(b.opened || '');
       var when = /^\d{8}-\d{6}$/.test(o)
         ? o.slice(6, 8) + '/' + o.slice(4, 6) + '/' + o.slice(0, 4) + ' ' + o.slice(9, 11) + ':' + o.slice(11, 13) + ':' + o.slice(13, 15)
         : '';
-      $('appVersion').textContent = 'เวอร์ชัน ' + (b.commit === 'dev' ? 'พัฒนา (dev)' : b.commit.slice(0, 7)) +
-        suffix + (when ? ' · เปิดเมื่อ ' + when : '');
+      $('appVersion').textContent = t('เวอร์ชัน {v}', { v: (b.commit === 'dev' ? t('พัฒนา (dev)') : b.commit.slice(0, 7)) + suffix }) +
+        (when ? ' · ' + t('เปิดเมื่อ {when}', { when: when }) : '');
     }
     $('appVersion').title = 'v=' + b.v;
   }
 
+  /** เปลี่ยนภาษา (ปุ่มในหน้าหลัก): ข้อความคงที่ js/i18n.js แปลเอง — ส่วนที่มีตัวเลข/สถานะแสดงใหม่ที่นี่ */
+  function onLanguage() {
+    Motion.play($('viewHome'), [{ opacity: 0.35 }, { opacity: 1 }], { duration: 260 });
+    renderVersion();
+    renderCvStatus();
+    renderGrid();
+    syncExportOcr();
+    if (state.view === 'editor' && currentPage()) renderEditor();
+  }
+
   function init() {
     renderVersion();
+    I18n.onChange(onLanguage);
     bindHome();
     bindEditor();
     bindCrop();

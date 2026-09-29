@@ -17,7 +17,7 @@
   'use strict';
 
   var HEX = /^[0-9a-f]{7,40}$/;
-  var BUILD = '77099bc3d166';
+  var BUILD = '2bdc6e8360e3';
   var commit = HEX.test(BUILD) ? BUILD : 'dev';
   // เวอร์ชันของหน้า HTML เอง (อาจค้างในแคชคนละรุ่นกับ boot.js)
   var meta = document.querySelector('meta[name="app-build"]');
@@ -32,6 +32,8 @@
   var STYLES = ['css/style.css'];
   // ไลบรารีใน vendor/ โหลดเมื่อต้องใช้ผ่าน AppPlatform (เช่น jsPDF ตอนเปิดหน้าต่างสร้าง PDF)
   var SCRIPTS = [
+    ['js/i18n.js'],     // ต้องมาก่อน: ไฟล์อื่นใช้ I18n.t — หน้าเว็บแสดงเมื่อแปลข้อความในหน้าเสร็จ (ไม่เห็นภาษาไทยแวบก่อนเป็นอังกฤษ)
+    ['js/motion.js'],
     ['js/cv-core.js'],
     ['js/scanner.js'],
     ['js/cv-engine.js'],
@@ -63,7 +65,11 @@
       s.src = src;
       s.async = true;
       s.onload = function () { resolve(s); };
-      s.onerror = function () { s.remove(); reject(new Error('โหลดไฟล์ ' + src + ' ไม่สำเร็จ')); };
+      s.onerror = function () {
+        s.remove();
+        var text = 'โหลดไฟล์ {src} ไม่สำเร็จ';
+        reject(new Error(window.I18n ? I18n.t(text, { src: src }) : text.replace('{src}', src)));
+      };
       document.head.appendChild(s);
     });
   }
@@ -93,11 +99,12 @@
   // (ซ่อนจากสคริปต์นี้เอง — ถ้า boot.js โหลดไม่ได้ หน้าจะไม่ว่างเปล่า)
   var root = document.documentElement;
   root.style.visibility = 'hidden';
-  var cssDone = false, domDone = false, reloading = false;
-  function reveal() { if (cssDone && domDone && !reloading) root.style.visibility = ''; }
+  var cssDone = false, domDone = false, langDone = false, reloading = false;
+  function reveal() { if (cssDone && domDone && langDone && !reloading) root.style.visibility = ''; }
+  function langReady() { langDone = true; reveal(); }
   function cssReady() { cssDone = true; reveal(); }
   document.addEventListener('DOMContentLoaded', function () { domDone = true; reveal(); });
-  setTimeout(function () { cssDone = true; domDone = true; reveal(); }, 5000);
+  setTimeout(function () { cssDone = true; domDone = true; langDone = true; reveal(); }, 5000);
 
   STYLES.forEach(function (href) {
     var l = document.createElement('link');
@@ -108,13 +115,19 @@
     document.head.appendChild(l);
   });
 
+  function addScript(s) {
+    var el = document.createElement('script');
+    el.src = asset(s[0], s[1]);
+    el.async = false; // ทำงานตามลำดับ
+    if (s[0] === 'js/i18n.js') { el.onload = langReady; el.onerror = langReady; }
+    document.head.appendChild(el);
+  }
+
+  // ภาษา (js/i18n.js — ไฟล์แรกใน SCRIPTS) โหลดทันทีพร้อมกับการตรวจเวอร์ชัน: หน้าเว็บแสดงเมื่อแปลข้อความในหน้าเสร็จ
+  addScript(SCRIPTS[0]);
+
   function loadScripts() {
-    SCRIPTS.forEach(function (s) {
-      var el = document.createElement('script');
-      el.src = asset(s[0], s[1]);
-      el.async = false; // ทำงานตามลำดับ
-      document.head.appendChild(el);
-    });
+    SCRIPTS.slice(1).forEach(addScript);
   }
 
   /** ตรวจว่าหน้า HTML และ boot.js เป็นเวอร์ชันล่าสุด (ไม่ได้มาจากแคช) — ถ้าไม่ใช่ โหลดหน้าใหม่ 1 ครั้ง */

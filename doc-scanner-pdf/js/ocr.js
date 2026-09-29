@@ -24,7 +24,7 @@
   function abs(u) { return new URL(u, document.baseURI).href; }
 
   function platform() {
-    if (!window.AppPlatform) throw new Error('ไม่พบ AppPlatform (js/boot.js)');
+    if (!window.AppPlatform) throw new Error(I18n.t('ไม่พบ AppPlatform (js/boot.js)'));
     return window.AppPlatform;
   }
 
@@ -52,9 +52,9 @@
       try { loading = platform().loadScript(BASE + 'tesseract.min.js', true); } catch (e) { loading = Promise.reject(e); }
       libPromise = loading.then(function () {
         if (window.Tesseract) return window.Tesseract;
-        throw new Error('โหลดตัวอ่านข้อความไม่สำเร็จ');
+        throw new Error(I18n.t('โหลดตัวอ่านข้อความไม่สำเร็จ'));
       }, function () {
-        throw new Error('โหลดตัวอ่านข้อความไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต');
+        throw new Error(I18n.t('โหลดตัวอ่านข้อความไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต'));
       });
       libPromise.catch(function () { libPromise = null; }); // ลองใหม่ได้ครั้งหน้า
     }
@@ -79,7 +79,7 @@
     return new Promise(function (resolve, reject) {
       var done = function (fn, v) { clearTimeout(timer); if (opFail === fail) opFail = null; fn(v); };
       var fail = function (e) { done(reject, e); };
-      var timer = setTimeout(function () { fail(new Error('เริ่มตัวอ่านข้อความนานเกินไป')); }, INIT_TIMEOUT_MS);
+      var timer = setTimeout(function () { fail(new Error(I18n.t('เริ่มตัวอ่านข้อความนานเกินไป'))); }, INIT_TIMEOUT_MS);
       opFail = fail;
       p.then(function (v) { done(resolve, v); }, fail);
     });
@@ -87,7 +87,7 @@
 
   function onTesseractError(e) {
     console.warn('OCR', e);
-    if (opFail) opFail(new Error('เริ่มตัวอ่านข้อความไม่สำเร็จ'));
+    if (opFail) opFail(new Error(I18n.t('เริ่มตัวอ่านข้อความไม่สำเร็จ')));
   }
 
   async function getWorker(lang) {
@@ -259,7 +259,7 @@
     var jobs = pending.splice(0);
     jobs.forEach(function (job) {
       job.cancelled = true;
-      var err = new Error('ยกเลิกแล้ว');
+      var err = new Error(I18n.t('ยกเลิกแล้ว'));
       err.cancelled = true;
       job.cancel(err);
       job.reject(err);

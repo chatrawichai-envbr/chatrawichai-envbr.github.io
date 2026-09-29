@@ -35,7 +35,7 @@
   var generation = 0;            // เพิ่มค่าเมื่อเริ่มโหลดใหม่ เพื่อไม่สนผลจากรอบเก่า
 
   function platform() {
-    if (!window.AppPlatform) throw new Error('ไม่พบ AppPlatform (js/boot.js)');
+    if (!window.AppPlatform) throw new Error(I18n.t('ไม่พบ AppPlatform (js/boot.js)'));
     return window.AppPlatform;
   }
 
@@ -72,7 +72,7 @@
     entry.whenReady = Promise.all([
       resolve(WORKER_URL), resolve(CORE_URL), resolve(build.script, true), build.wasm ? resolve(build.wasm, true) : null
     ]).then(function (urls) {
-      if (entry.removed) throw new Error('ยกเลิกแล้ว');
+      if (entry.removed) throw new Error(I18n.t('ยกเลิกแล้ว'));
       return startWorker(entry, gen, urls);
     });
     entry.whenReady.catch(function () { removeWorker(entry); });
@@ -85,7 +85,7 @@
       var w;
       try { w = new Worker(urls[0]); } catch (e) { reject(e); return; }
       entry.worker = w;
-      var timer = setTimeout(function () { reject(new Error('โหลด OpenCV นานเกินไป')); }, INIT_TIMEOUT_MS);
+      var timer = setTimeout(function () { reject(new Error(I18n.t('โหลด OpenCV นานเกินไป'))); }, INIT_TIMEOUT_MS);
       w.onmessage = function (e) {
         var m = e.data || {};
         if (m.type === 'ready') { clearTimeout(timer); entry.ready = true; resolve(entry); }
@@ -95,7 +95,7 @@
       w.onerror = function (e) {
         if (e && e.preventDefault) e.preventDefault();
         clearTimeout(timer);
-        var err = new Error((e && e.message) || 'Worker ทำงานผิดพลาด');
+        var err = new Error((e && e.message) || I18n.t('Worker ทำงานผิดพลาด'));
         if (!entry.ready) reject(err); else onCrash(entry, err);
       };
       w.postMessage({ type: 'init', core: urls[1], script: urls[2], wasm: urls[3] });
@@ -132,7 +132,7 @@
     removeWorker(entry);
     if (!workers.length && state === 'ready') {
       var fresh = spawnWorker(BUILDS[buildName]);
-      fresh.whenReady.then(dispatch, function () { failAll(new Error('ตัวประมวลผลภาพหยุดทำงาน')); });
+      fresh.whenReady.then(dispatch, function () { failAll(new Error(I18n.t('ตัวประมวลผลภาพหยุดทำงาน'))); });
     }
     dispatch();
   }
@@ -175,7 +175,7 @@
   var nextId = 1;
 
   function run(op, args, transfer, priority) {
-    if (state !== 'ready') return Promise.reject(new Error('ตัวประมวลผลภาพยังไม่พร้อม'));
+    if (state !== 'ready') return Promise.reject(new Error(I18n.t('ตัวประมวลผลภาพยังไม่พร้อม')));
     if (mode === 'inline') {
       return new Promise(function (resolve, reject) {
         try {
@@ -203,7 +203,7 @@
   function waitForWindowCv() {
     return new Promise(function (resolve, reject) {
       var c = window.cv;
-      if (!c) { reject(new Error('ไม่พบ OpenCV')); return; }
+      if (!c) { reject(new Error(I18n.t('ไม่พบ OpenCV'))); return; }
       if (c instanceof Promise) { c.then(function (m) { window.cv = m; resolve(); }, reject); return; }
       // emscripten 2.x: `cv` เป็น thenable ที่ resolve เป็นตัวเอง ห้าม await ตรง ๆ
       var done = false;
@@ -256,10 +256,10 @@
         });
       }, Promise.reject(null)).catch(function (err) {
         console.warn('Web Worker ใช้ไม่ได้ เปลี่ยนเป็นประมวลผลในหน้าเว็บ:', err && err.message);
-        return withTimeout(startInline(), INIT_TIMEOUT_MS, 'โหลด OpenCV นานเกินไป');
+        return withTimeout(startInline(), INIT_TIMEOUT_MS, I18n.t('โหลด OpenCV นานเกินไป'));
       });
     } else {
-      attempt = withTimeout(startInline(), INIT_TIMEOUT_MS, 'โหลด OpenCV นานเกินไป');
+      attempt = withTimeout(startInline(), INIT_TIMEOUT_MS, I18n.t('โหลด OpenCV นานเกินไป'));
     }
 
     attempt.then(function () {
@@ -277,7 +277,7 @@
     generation++;
     workers.slice().forEach(removeWorker);
     spawning = false;
-    failAll(new Error('ตัวประมวลผลภาพถูกเริ่มใหม่'));
+    failAll(new Error(I18n.t('ตัวประมวลผลภาพถูกเริ่มใหม่')));
   }
 
   // ---------------------------------------------------------------------
