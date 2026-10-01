@@ -1,36 +1,40 @@
-# chatrawichai-tech.github.io
+# doc-scanner-pdf — เว็บไซต์
 
-หน้าเว็บของ chatrawichai-tech บน GitHub Pages — https://chatrawichai-tech.github.io/
+เว็บไซต์ของแอปสแกนเอกสารเป็น PDF บน GitHub Pages — https://envoccbr.github.io/doc-scanner-pdf/
 
 | แอป | ที่อยู่ | โค้ดต้นทาง |
 |---|---|---|
-| สแกนเอกสารเป็น PDF | https://chatrawichai-tech.github.io/doc-scanner-pdf/ | repo `chatrawichai-tech/claude4code` (private) โฟลเดอร์ `doc-scanner-pdf/` |
-| สแกนเอกสาร PDF — แอป Android | https://chatrawichai-tech.github.io/doc-scanner-pdf-android/ | repo `chatrawichai-tech/claude4app` (private) — ไฟล์ APK ที่เซ็นแล้ว |
+| สแกนเอกสารเป็น PDF (เว็บแอป) | https://envoccbr.github.io/doc-scanner-pdf/doc-scanner-pdf/ | repo [`envoccbr/doc-scanner-pdf-code`](https://github.com/envoccbr/doc-scanner-pdf-code) โฟลเดอร์ `doc-scanner-pdf/` |
+| สแกนเอกสาร PDF — แอป Android | https://envoccbr.github.io/doc-scanner-pdf/doc-scanner-pdf-android/ | repo [`envoccbr/doc-scanner-pdf-android`](https://github.com/envoccbr/doc-scanner-pdf-android) — ไฟล์ APK ที่เซ็นแล้ว |
+
+repo นี้กู้คืนเมื่อ 2026-10-01 จาก `chatrawichai-tech/chatrawichai-tech.github.io` (บัญชีเดิมใช้ไม่ได้แล้ว) —
+ที่อยู่เดิม https://chatrawichai-tech.github.io/ ใช้ไม่ได้แล้ว
 
 ## โครงสร้าง
 
+เว็บไซต์นี้เป็น GitHub Pages ของ repo (อยู่ใต้ `/doc-scanner-pdf/`) ลิงก์ทุกลิงก์จึงเป็นแบบสัมพัทธ์ (ไม่ขึ้นต้นด้วย `/`)
+
 ```
-doc-scanner-pdf/        แอปสแกนเอกสาร — สร้างอัตโนมัติจาก repo claude4code ด้วย tools/publish-site.sh ห้ามแก้ไฟล์ในโฟลเดอร์นี้เอง
-                        (version.json = commit ต้นทางใน repo claude4code)
-doc-scanner-pdf-android/  ไฟล์ APK ของแอป Android + หน้าดาวน์โหลด — CI ของ repo claude4app push ให้อัตโนมัติหลังทดสอบผ่าน
-                        (เฉพาะ APK ที่เซ็นด้วยกุญแจถาวร) ห้ามแก้ไฟล์ในโฟลเดอร์นี้เอง
-index.html, site.css    หน้าแรก (รายการแอป)
-claude/index.html       ที่อยู่เดิมของแอป https://chatrawichai-tech.github.io/claude/ (สมัย repo ชื่อ claude) → พาไปที่อยู่ใหม่
-.nojekyll               ให้ GitHub Pages เผยแพร่ไฟล์ตามจริง (ไม่ผ่าน Jekyll)
+doc-scanner-pdf/          เว็บแอปสแกนเอกสาร — สร้างอัตโนมัติจาก repo doc-scanner-pdf-code ด้วย tools/publish-site.sh
+                          ห้ามแก้ไฟล์ในโฟลเดอร์นี้เอง (version.json = commit ต้นทาง)
+doc-scanner-pdf-android/  ไฟล์ APK ของแอป Android + หน้าดาวน์โหลด + นโยบายความเป็นส่วนตัว — CI ของ repo doc-scanner-pdf-android
+                          push ให้อัตโนมัติหลังทดสอบผ่าน (เฉพาะ APK ที่เซ็นด้วยกุญแจถาวร) ห้ามแก้ไฟล์ในโฟลเดอร์นี้เอง
+index.html, site.css      หน้าแรก (รายการแอป)
+.nojekyll                 ให้ GitHub Pages เผยแพร่ไฟล์ตามจริง (ไม่ผ่าน Jekyll)
 .github/workflows/live.yml   ตรวจเว็บจริงหลัง push ทุกครั้งและทุกวัน
 ```
 
-โค้ดของแอปทั้งหมดอยู่ใน repo `claude4code` (เดิมชื่อ `claude`) — repo นี้เก็บเฉพาะไฟล์ที่เผยแพร่เป็นหน้าเว็บ (ไฟล์เดียวกับที่เบราว์เซอร์ดาวน์โหลดไปใช้งานอยู่แล้ว)
+โค้ดของแอปทั้งหมดอยู่ใน repo `doc-scanner-pdf-code` — repo นี้เก็บเฉพาะไฟล์ที่เผยแพร่เป็นหน้าเว็บ
 
-## อัปเดตแอป
+## อัปเดตเว็บแอป
 
-แก้ไขใน repo `claude4code` และให้ชุดทดสอบผ่าน แล้วเผยแพร่จาก commit นั้น (clone repo นี้ไว้ข้างกัน):
+แก้ไขใน repo `doc-scanner-pdf-code` และให้ชุดทดสอบผ่าน แล้วเผยแพร่จาก commit นั้น (clone repo นี้ไว้ข้างกันในชื่อ `doc-scanner-pdf`):
 
 ```bash
-cd claude4code
-tools/publish-site.sh          # เขียน ../chatrawichai-tech.github.io/doc-scanner-pdf/ ใหม่ทั้งโฟลเดอร์
-cd ../chatrawichai-tech.github.io
-git add -A && git commit -m "Publish doc-scanner-pdf from claude4code@<commit>" && git push origin main
+cd doc-scanner-pdf-code
+tools/publish-site.sh          # เขียน ../doc-scanner-pdf/doc-scanner-pdf/ ใหม่ทั้งโฟลเดอร์
+cd ../doc-scanner-pdf
+git add -A && git commit -m "Publish doc-scanner-pdf from doc-scanner-pdf-code@<commit>" && git push origin main
 ```
 
 `tools/publish-site.sh` ใช้เฉพาะไฟล์ที่ commit แล้ว ประทับเลข commit ลงในหน้าเว็บ (ล้างแคชเบราว์เซอร์อัตโนมัติ)
@@ -38,17 +42,18 @@ git add -A && git commit -m "Publish doc-scanner-pdf from claude4code@<commit>" 
 
 ## แอป Android
 
-ทุกครั้งที่ CI ของ `claude4app` ออก Release ใหม่ (ทดสอบบน emulator มือถือ มือถือจอเล็ก และแท็บเล็ตผ่านครบ) งาน `site`
+ทุกครั้งที่ CI ของ `doc-scanner-pdf-android` ออก Release ใหม่ (ทดสอบบน emulator มือถือ มือถือจอเล็ก และแท็บเล็ตผ่านครบ) งาน `site`
 จะตรวจว่า APK เซ็นด้วยกุญแจถาวร แล้ว push โฟลเดอร์ `doc-scanner-pdf-android/` มาที่ repo นี้ (APK รุ่นล่าสุดไฟล์เดียว, `index.html`,
-`privacy.html` นโยบายความเป็นส่วนตัวของแอปที่ใช้กับ Google Play, `version.json` ที่มี SHA-256) ด้วย deploy key ที่เขียนได้เฉพาะ repo นี้ (secret `SITE_DEPLOY_KEY` ใน claude4app)
+`privacy.html` นโยบายความเป็นส่วนตัวของแอปที่ใช้กับ Google Play, `version.json` ที่มี SHA-256) ด้วย deploy key ที่เขียนได้เฉพาะ repo นี้
+(secret `SITE_DEPLOY_KEY` ใน repo doc-scanner-pdf-android — วิธีตั้งอยู่ใน README ของ repo นั้น)
 
 ## การตรวจสอบ
 
 - **repo นี้** (`live.yml`): หลัง push และทุกวัน — โฟลเดอร์แอปเป็น build ที่ประทับเลข commit แล้ว, APK ตรงกับ SHA-256 ใน `version.json`,
-  GitHub Pages ให้บริการ commit นี้ และทุกไฟล์บนเว็บจริงตรงกับไฟล์ใน repo ทุกไบต์, หน้าแรกและที่อยู่เดิมใช้งานได้
-- **repo claude4code** (`published-site.yml`): ทุกวัน — โฟลเดอร์ `doc-scanner-pdf/` ที่นี่ตรงกับผลของ `publish-site.sh`
-  และไม่มีการแก้ไขใน repo claude4code ที่ยังไม่ได้เผยแพร่
+  GitHub Pages ให้บริการ commit นี้ และทุกไฟล์บนเว็บจริงตรงกับไฟล์ใน repo ทุกไบต์, หน้าแรกและหน้าดาวน์โหลดไม่มีลิงก์ที่ขึ้นต้นด้วย `/`
+- **repo doc-scanner-pdf-code** (`published-site.yml`): ทุกวัน — โฟลเดอร์ `doc-scanner-pdf/` ที่นี่ตรงกับผลของ `publish-site.sh`
+  และไม่มีการแก้ไขใน repo นั้นที่ยังไม่ได้เผยแพร่
 
-## ตั้งค่า GitHub Pages
+## ตั้งค่า GitHub Pages (ทำครั้งเดียว)
 
-Settings → Pages → Build and deployment → **Deploy from a branch** → `main` / `(root)`
+Settings → Pages → Build and deployment → **Deploy from a branch** → `main` / `(root)` → Save
