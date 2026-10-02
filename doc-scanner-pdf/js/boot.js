@@ -17,7 +17,7 @@
   'use strict';
 
   var HEX = /^[0-9a-f]{7,40}$/;
-  var BUILD = '169d9b0c8ddd';
+  var BUILD = 'ec6ef1b05091';
   var commit = HEX.test(BUILD) ? BUILD : 'dev';
   // เวอร์ชันของหน้า HTML เอง (อาจค้างในแคชคนละรุ่นกับ boot.js)
   var meta = document.querySelector('meta[name="app-build"]');

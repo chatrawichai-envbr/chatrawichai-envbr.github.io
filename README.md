@@ -1,18 +1,20 @@
-# doc-scanner-pdf — เว็บไซต์
+# chatrawichai-envbr.github.io — เว็บไซต์
 
-เว็บไซต์ของแอปสแกนเอกสารเป็น PDF บน GitHub Pages — https://chatrawichai-envbr.github.io/doc-scanner-pdf/
+เว็บไซต์ของแอปสแกนเอกสารเป็น PDF บน GitHub Pages — https://chatrawichai-envbr.github.io/
 
 | แอป | ที่อยู่ | โค้ดต้นทาง |
 |---|---|---|
-| สแกนเอกสารเป็น PDF (เว็บแอป) | https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf/ | repo [`chatrawichai-envbr/doc-scanner-pdf-code`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-code) โฟลเดอร์ `doc-scanner-pdf/` |
-| สแกนเอกสาร PDF — แอป Android | https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf-android/ | repo [`chatrawichai-envbr/doc-scanner-pdf-android`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-android) — ไฟล์ APK ที่เซ็นแล้ว |
+| สแกนเอกสารเป็น PDF (เว็บแอป) | https://chatrawichai-envbr.github.io/doc-scanner-pdf/ | repo [`chatrawichai-envbr/doc-scanner-pdf-code`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-code) โฟลเดอร์ `doc-scanner-pdf/` |
+| สแกนเอกสาร PDF — แอป Android | https://chatrawichai-envbr.github.io/doc-scanner-pdf-android/ | repo [`chatrawichai-envbr/doc-scanner-pdf-android`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-android) — ไฟล์ APK ที่เซ็นแล้ว |
 
-repo นี้กู้คืนเมื่อ 2026-10-01 จาก `chatrawichai-tech/chatrawichai-tech.github.io` (บัญชีเดิมใช้ไม่ได้แล้ว) —
+repo นี้กู้คืนเมื่อ 2026-10-01 จาก `chatrawichai-tech/chatrawichai-tech.github.io` (บัญชีเดิมใช้ไม่ได้แล้ว)
+และเปลี่ยนชื่อเป็น `chatrawichai-envbr/chatrawichai-envbr.github.io` เมื่อ 2026-10-02 —
 ที่อยู่เดิม https://chatrawichai-tech.github.io/ ใช้ไม่ได้แล้ว
 
 ## โครงสร้าง
 
-เว็บไซต์นี้เป็น GitHub Pages ของ repo (อยู่ใต้ `/doc-scanner-pdf/`) ลิงก์ทุกลิงก์จึงเป็นแบบสัมพัทธ์ (ไม่ขึ้นต้นด้วย `/`)
+เว็บไซต์นี้เป็น GitHub Pages ของบัญชี (user site อยู่ที่ราก `/`) ลิงก์ทุกลิงก์เป็นแบบสัมพัทธ์ (ไม่ขึ้นต้นด้วย `/`)
+หน้าเว็บจึงใช้ได้ทั้งที่รากและในโฟลเดอร์ย่อย
 
 ```
 doc-scanner-pdf/          เว็บแอปสแกนเอกสาร — สร้างอัตโนมัติจาก repo doc-scanner-pdf-code ด้วย tools/publish-site.sh
@@ -28,12 +30,12 @@ index.html, site.css      หน้าแรก (รายการแอป)
 
 ## อัปเดตเว็บแอป
 
-แก้ไขใน repo `doc-scanner-pdf-code` และให้ชุดทดสอบผ่าน แล้วเผยแพร่จาก commit นั้น (clone repo นี้ไว้ข้างกันในชื่อ `doc-scanner-pdf`):
+แก้ไขใน repo `doc-scanner-pdf-code` และให้ชุดทดสอบผ่าน แล้วเผยแพร่จาก commit นั้น (clone repo นี้ไว้ข้างกันในชื่อ `chatrawichai-envbr.github.io`):
 
 ```bash
 cd doc-scanner-pdf-code
-tools/publish-site.sh          # เขียน ../doc-scanner-pdf/doc-scanner-pdf/ ใหม่ทั้งโฟลเดอร์
-cd ../doc-scanner-pdf
+tools/publish-site.sh          # เขียน ../chatrawichai-envbr.github.io/doc-scanner-pdf/ ใหม่ทั้งโฟลเดอร์
+cd ../chatrawichai-envbr.github.io
 git add -A && git commit -m "Publish doc-scanner-pdf from doc-scanner-pdf-code@<commit>" && git push origin main
 ```
 

@@ -1,11 +1,11 @@
-# GitHub Pages (project site of chatrawichai-envbr/doc-scanner-pdf) publishes this repository's main branch as it is
+# GitHub Pages (user site of chatrawichai-envbr/chatrawichai-envbr.github.io) publishes this repository's main branch as it is
 # (.nojekyll: no Jekyll processing), so every link in it is relative:
-#   https://chatrawichai-envbr.github.io/doc-scanner-pdf/                           index.html — the web app and the Android app
-#   https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf/           the web app, published from chatrawichai-envbr/doc-scanner-pdf-code
-#                                                                                   by its tools/publish-site.sh (never edited here)
-#   https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf-android/   the Android app's signed APK, download page and
-#                                                                                   privacy policy, pushed by the release job of
-#                                                                                   chatrawichai-envbr/doc-scanner-pdf-android (never edited here)
+#   https://chatrawichai-envbr.github.io/                           index.html — the web app and the Android app
+#   https://chatrawichai-envbr.github.io/doc-scanner-pdf/           the web app, published from chatrawichai-envbr/doc-scanner-pdf-code
+#                                                                   by its tools/publish-site.sh (never edited here)
+#   https://chatrawichai-envbr.github.io/doc-scanner-pdf-android/   the Android app's signed APK, download page and
+#                                                                   privacy policy, pushed by the release job of
+#                                                                   chatrawichai-envbr/doc-scanner-pdf-android (never edited here)
 #
 # After every push (and daily): the committed app is a stamped build, and the live site serves this exact commit,
 # every file byte for byte. Actions are pinned to full commit SHAs.
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SITE: https://chatrawichai-envbr.github.io/doc-scanner-pdf
+      SITE: https://chatrawichai-envbr.github.io
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -103,7 +103,7 @@ jobs:
           home="$(curl -fsS "${SITE}/?t=$(date +%s%N)")"
           grep -qF 'href="doc-scanner-pdf/"' <<<"$home" || { echo "::error::home page does not link the app"; exit 1; }
           grep -qF 'href="site.css"' <<<"$home" || { echo "::error::home page does not use the relative site.css"; exit 1; }
-          if grep -qE '(href|src)="/' <<<"$home"; then echo "::error::home page has a root-relative link (the site lives under /doc-scanner-pdf/)"; exit 1; fi
+          if grep -qE '(href|src)="/' <<<"$home"; then echo "::error::home page has a root-relative link (every link stays relative)"; exit 1; fi
           app="$(curl -fsS "${SITE}/doc-scanner-pdf/?t=$(date +%s%N)")"
           grep -qF "js/boot.js?v=${build}\"" <<<"$app" || { echo "::error::/doc-scanner-pdf/ does not serve index.html of ${build}"; exit 1; }
           if [ -d doc-scanner-pdf-android ]; then
