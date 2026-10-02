@@ -1,4 +1,4 @@
-/* หน้าแรกของเว็บไซต์ (https://envoccbr.github.io/doc-scanner-pdf/) และหน้าดาวน์โหลดแอป Android (ไม่มีสคริปต์) */
+/* หน้าแรกของเว็บไซต์ (https://chatrawichai-envbr.github.io/doc-scanner-pdf/) และหน้าดาวน์โหลดแอป Android (ไม่มีสคริปต์) */
 :root { color-scheme: light dark; --bg: #f4f6fb; --card: #fff; --text: #172033; --muted: #5b6478; --primary: #1f5eff; --border: #dde3ee; }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0f1420; --card: #182033; --text: #e8ecf5; --muted: #9aa4ba; --primary: #6f97ff; --border: #2a3450; }

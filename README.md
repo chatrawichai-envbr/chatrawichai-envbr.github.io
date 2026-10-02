@@ -1,11 +1,11 @@
 # doc-scanner-pdf — เว็บไซต์
 
-เว็บไซต์ของแอปสแกนเอกสารเป็น PDF บน GitHub Pages — https://envoccbr.github.io/doc-scanner-pdf/
+เว็บไซต์ของแอปสแกนเอกสารเป็น PDF บน GitHub Pages — https://chatrawichai-envbr.github.io/doc-scanner-pdf/
 
 | แอป | ที่อยู่ | โค้ดต้นทาง |
 |---|---|---|
-| สแกนเอกสารเป็น PDF (เว็บแอป) | https://envoccbr.github.io/doc-scanner-pdf/doc-scanner-pdf/ | repo [`envoccbr/doc-scanner-pdf-code`](https://github.com/envoccbr/doc-scanner-pdf-code) โฟลเดอร์ `doc-scanner-pdf/` |
-| สแกนเอกสาร PDF — แอป Android | https://envoccbr.github.io/doc-scanner-pdf/doc-scanner-pdf-android/ | repo [`envoccbr/doc-scanner-pdf-android`](https://github.com/envoccbr/doc-scanner-pdf-android) — ไฟล์ APK ที่เซ็นแล้ว |
+| สแกนเอกสารเป็น PDF (เว็บแอป) | https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf/ | repo [`chatrawichai-envbr/doc-scanner-pdf-code`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-code) โฟลเดอร์ `doc-scanner-pdf/` |
+| สแกนเอกสาร PDF — แอป Android | https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf-android/ | repo [`chatrawichai-envbr/doc-scanner-pdf-android`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-android) — ไฟล์ APK ที่เซ็นแล้ว |
 
 repo นี้กู้คืนเมื่อ 2026-10-01 จาก `chatrawichai-tech/chatrawichai-tech.github.io` (บัญชีเดิมใช้ไม่ได้แล้ว) —
 ที่อยู่เดิม https://chatrawichai-tech.github.io/ ใช้ไม่ได้แล้ว

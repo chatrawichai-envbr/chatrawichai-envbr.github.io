@@ -1,11 +1,11 @@
-# GitHub Pages (project site of envoccbr/doc-scanner-pdf) publishes this repository's main branch as it is
+# GitHub Pages (project site of chatrawichai-envbr/doc-scanner-pdf) publishes this repository's main branch as it is
 # (.nojekyll: no Jekyll processing), so every link in it is relative:
-#   https://envoccbr.github.io/doc-scanner-pdf/                           index.html — the web app and the Android app
-#   https://envoccbr.github.io/doc-scanner-pdf/doc-scanner-pdf/           the web app, published from envoccbr/doc-scanner-pdf-code
-#                                                                         by its tools/publish-site.sh (never edited here)
-#   https://envoccbr.github.io/doc-scanner-pdf/doc-scanner-pdf-android/   the Android app's signed APK, download page and
-#                                                                         privacy policy, pushed by the release job of
-#                                                                         envoccbr/doc-scanner-pdf-android (never edited here)
+#   https://chatrawichai-envbr.github.io/doc-scanner-pdf/                           index.html — the web app and the Android app
+#   https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf/           the web app, published from chatrawichai-envbr/doc-scanner-pdf-code
+#                                                                                   by its tools/publish-site.sh (never edited here)
+#   https://chatrawichai-envbr.github.io/doc-scanner-pdf/doc-scanner-pdf-android/   the Android app's signed APK, download page and
+#                                                                                   privacy policy, pushed by the release job of
+#                                                                                   chatrawichai-envbr/doc-scanner-pdf-android (never edited here)
 #
 # After every push (and daily): the committed app is a stamped build, and the live site serves this exact commit,
 # every file byte for byte. Actions are pinned to full commit SHAs.
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SITE: https://envoccbr.github.io/doc-scanner-pdf
+      SITE: https://chatrawichai-envbr.github.io/doc-scanner-pdf
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
