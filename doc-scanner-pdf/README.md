@@ -6,9 +6,6 @@
 
 **ใช้งานออนไลน์:** https://chatrawichai-envbr.github.io/doc-scanner-pdf/
 
-**เวอร์ชัน Google Apps Script:** [`chatrawichai-envbr/doc-scanner-pdf-gas`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-gas)
-(โฟลเดอร์ `doc-scanner-pdf-gas/`) — แปลงอัตโนมัติจากโค้ดชุดนี้ ติดตั้งเป็นเว็บแอปในบัญชี Google ของคุณเองได้
-
 **แอป Android (มือถือและแท็บเล็ต):** [`chatrawichai-envbr/doc-scanner-pdf-android`](https://github.com/chatrawichai-envbr/doc-scanner-pdf-android)
 (โฟลเดอร์ `doc-scanner-pdf-android/`) — แปลงอัตโนมัติจากโค้ดชุดนี้ ทำงานในเครื่องโดยไม่ต้องใช้อินเทอร์เน็ต
 ดาวน์โหลดไฟล์ APK (รุ่นล่าสุด เซ็นด้วยกุญแจถาวร) ได้ที่ https://chatrawichai-envbr.github.io/doc-scanner-pdf-android/
@@ -166,7 +163,7 @@ doc-scanner-pdf/
 │   ├── i18n.js           ภาษาของหน้าจอ ไทย/อังกฤษ (พจนานุกรมอังกฤษ ใช้ข้อความไทยเป็น key) และปุ่มเปลี่ยนภาษา
 │   ├── motion.js         แอนิเมชันของรายการหน้า (เพิ่ม/ย้าย/ลบ) — ปิดเองเมื่อเครื่องตั้ง "ลดการเคลื่อนไหว"
 │   ├── boot.js           โหลด CSS/JS พร้อม ?v= (ล้างแคช), ตรวจเวอร์ชันล่าสุด และ AppPlatform (ที่อยู่ไฟล์ของแอป —
-│   │                     เวอร์ชัน Apps Script ใช้ AppPlatform ของตัวเองแทนไฟล์นี้ ไฟล์อื่นใช้ร่วมกันได้โดยไม่ต้องแก้)
+│   │                     แอป Android ใช้ AppPlatform ของตัวเองแทนไฟล์นี้ ไฟล์อื่นใช้ร่วมกันได้โดยไม่ต้องแก้)
 │   ├── cv-core.js        อัลกอริทึม: ตรวจจับขอบ, ดัดภาพ, ลบเงา, ฟิลเตอร์ (OpenCV, ไม่ใช้ DOM)
 │   ├── cv-worker.js      Web Worker ที่รัน OpenCV.js + cv-core.js
 │   ├── cv-engine.js      จัดการกลุ่ม worker, เลือก build SIMD/พื้นฐาน, โหมดสำรองในหน้าเว็บ

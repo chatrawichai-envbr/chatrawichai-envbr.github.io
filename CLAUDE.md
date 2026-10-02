@@ -4,10 +4,12 @@
 
 `chatrawichai-envbr/chatrawichai-envbr.github.io` — the GitHub Pages **user** site https://chatrawichai-envbr.github.io/, published
 from `main` as is (`.nojekyll`). It hosts the public build of the apps whose code lives in `chatrawichai-envbr/doc-scanner-pdf-code`
-(web), `chatrawichai-envbr/doc-scanner-pdf-android` (Android) and `chatrawichai-envbr/doc-scanner-pdf-gas` (Apps Script). Restored on
-2026-10-01 from `chatrawichai-tech/chatrawichai-tech.github.io` (a user site; that account's repositories are gone —
-claude4code → doc-scanner-pdf-code, claude4app → doc-scanner-pdf-android, claude4gas → doc-scanner-pdf-gas) as the
-project site `doc-scanner-pdf`; on 2026-10-02 the owner renamed it to the account's user site, served at the root.
+(web) and `chatrawichai-envbr/doc-scanner-pdf-android` (Android). Restored on 2026-10-01 from
+`chatrawichai-tech/chatrawichai-tech.github.io` (a user site; that account's repositories are gone — claude4code →
+doc-scanner-pdf-code, claude4app → doc-scanner-pdf-android) as the project site `doc-scanner-pdf`; on 2026-10-02 the owner
+renamed it to the account's user site, served at the root. Only these three repositories belong together — the owner
+(2026-10-02): *"ต่อไปนี้ไม่ต้องดำเนินการใดๆ กับ repo doc-scanner-pdf-gas อีกต่อไป มีเพียง doc-scanner-pdf-code,
+doc-scanner-pdf-android และ chatrawichai-envbr.github.io ที่เชื่อมโยงกันเท่านั้น"* (never touch or mention doc-scanner-pdf-gas).
 **Every link stays relative** (never `href="/…"`, so the pages also work from a sub-folder; `live.yml` checks the home
 page and the Android pages).
 
